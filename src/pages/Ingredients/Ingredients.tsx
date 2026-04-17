@@ -114,12 +114,12 @@ export function Ingredients() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Buscar ingrediente..."
-          className="w-full rounded-xl border border-surface-200 bg-white py-2.5 pr-10 pl-10 text-sm text-surface-900 placeholder-surface-800/30 shadow-card transition-colors focus:border-primary-300 focus:ring-0 focus:outline-none"
+          className="w-full rounded-xl border border-surface-200 bg-white dark:bg-surface-100 py-2.5 pr-10 pl-10 text-sm text-surface-900 placeholder-surface-800/30 shadow-card transition-colors focus:border-primary-300 focus:ring-0 focus:outline-none"
         />
         {search && (
           <button
             onClick={() => setSearch('')}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-surface-100 hover:text-surface-800"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-surface-100 hover:text-surface-800 dark:hover:bg-surface-200"
             title="Limpar busca"
           >
             <X className="h-4 w-4" />
@@ -135,7 +135,7 @@ export function Ingredients() {
 
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-surface-200 bg-white p-6 shadow-modal">
+          <div className="w-full max-w-md rounded-2xl border border-surface-200 bg-white dark:bg-surface-100 p-6 shadow-modal">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-surface-900">
                 {editingId ? 'Editar Ingrediente' : 'Novo Ingrediente'}
@@ -162,7 +162,7 @@ export function Ingredients() {
                   id="ingredient-name"
                   type="text"
                   {...register('name')}
-                  className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 text-sm text-surface-900 focus:outline-none ${errors.name ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
+                  className={`w-full rounded-xl border bg-surface-50 dark:bg-surface-200/50 px-3 py-2.5 text-sm text-surface-900 focus:outline-none ${errors.name ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
                   placeholder="Ex: Farinha de trigo"
                 />
                 {errors.name && (
@@ -183,7 +183,7 @@ export function Ingredients() {
                 <select
                   id="ingredient-unit"
                   {...register('unit_of_measure')}
-                  className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 text-sm text-surface-900 focus:outline-none ${errors.unit_of_measure ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
+                  className={`w-full rounded-xl border bg-surface-50 dark:bg-surface-200/50 px-3 py-2.5 text-sm text-surface-900 focus:outline-none ${errors.unit_of_measure ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
                 >
                   {Object.entries(UNIT_LABELS).map(([val, label]) => (
                     <option key={val} value={val}>
@@ -213,7 +213,7 @@ export function Ingredients() {
                     step="0.01"
                     min="0"
                     {...register('purchase_price', { valueAsNumber: true })}
-                    className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 text-sm text-surface-900 focus:outline-none ${errors.purchase_price ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
+                    className={`w-full rounded-xl border bg-surface-50 dark:bg-surface-200/50 px-3 py-2.5 text-sm text-surface-900 focus:outline-none ${errors.purchase_price ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
                     placeholder="0,00"
                   />
                   {errors.purchase_price && (
@@ -235,7 +235,7 @@ export function Ingredients() {
                     id="ingredient-qty"
                     type="number"
                     {...register('purchase_quantity', { valueAsNumber: true })}
-                    className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 text-sm text-surface-900 focus:outline-none ${errors.purchase_quantity ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
+                    className={`w-full rounded-xl border bg-surface-50 dark:bg-surface-200/50 px-3 py-2.5 text-sm text-surface-900 focus:outline-none ${errors.purchase_quantity ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
                     placeholder="1000"
                   />
                   {errors.purchase_quantity && (
@@ -247,8 +247,8 @@ export function Ingredients() {
               </div>
 
               {watchPrice > 0 && watchQty > 0 && (
-                <div className="rounded-lg bg-accent-50 p-3 text-sm">
-                  <span className="text-accent-700 font-medium">
+                <div className="rounded-lg bg-accent-50 dark:bg-accent-500/10 p-3 text-sm">
+                  <span className="text-accent-700 dark:text-accent-400 font-medium">
                     Custo unitário:{' '}
                     {formatCurrency(calculateUnitCost(watchPrice, watchQty))}
                     {UNIT_SUFFIX[watchUnit]}
@@ -260,7 +260,7 @@ export function Ingredients() {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 transition-colors hover:bg-surface-100"
+                  className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 transition-colors hover:bg-surface-100 dark:hover:bg-surface-200"
                 >
                   Cancelar
                 </button>
@@ -297,7 +297,7 @@ export function Ingredients() {
           )}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-surface-200 bg-white shadow-card">
+        <div className="overflow-hidden rounded-2xl border border-surface-200 bg-white dark:bg-surface-100 shadow-card">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-surface-200 bg-surface-50/50">
@@ -331,7 +331,7 @@ export function Ingredients() {
                 return (
                   <tr
                     key={ingredient.id}
-                    className="transition-colors hover:bg-surface-50/50"
+                    className="transition-colors hover:bg-surface-50/50 dark:hover:bg-surface-200/50"
                   >
                     <td className="px-4 py-3 font-medium text-surface-900">
                       {ingredient.name}
@@ -345,7 +345,7 @@ export function Ingredients() {
                     <td className="px-4 py-3 text-right text-surface-800/70">
                       {ingredient.purchase_quantity}
                     </td>
-                    <td className="px-4 py-3 text-right font-semibold text-accent-600">
+                    <td className="px-4 py-3 text-right font-semibold text-accent-600 dark:text-accent-400">
                       {formatCurrency(unitCost)}
                       {UNIT_SUFFIX[ingredient.unit_of_measure as UnitOfMeasure]}
                     </td>
@@ -353,14 +353,14 @@ export function Ingredients() {
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => handleEdit(ingredient)}
-                          className="rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-primary-50 hover:text-primary-600"
+                          className="rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-primary-500/10 dark:hover:text-primary-400"
                           title="Editar"
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => setDeletingIngredientId(ingredient.id)}
-                          className="rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-danger-500/5 hover:text-danger-500"
+                          className="rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-danger-500/5 hover:text-danger-500 dark:hover:bg-danger-500/10"
                           title="Excluir"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -377,7 +377,7 @@ export function Ingredients() {
 
       {deletingIngredientId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl border border-surface-200 bg-white p-6 shadow-modal">
+          <div className="w-full max-w-sm rounded-2xl border border-surface-200 bg-white dark:bg-surface-100 p-6 shadow-modal">
             <h2 className="mb-2 text-lg font-semibold text-surface-900">
               Excluir Ingrediente
             </h2>
@@ -389,7 +389,7 @@ export function Ingredients() {
             <div className="flex gap-3">
               <button
                 onClick={() => setDeletingIngredientId(null)}
-                className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 transition-colors"
+                className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 dark:hover:bg-surface-200 transition-colors"
               >
                 Cancelar
               </button>
