@@ -132,7 +132,9 @@ export function Login() {
               id="login-submit"
               type="submit"
               disabled={loading}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-4 py-2.5 font-medium text-white shadow-lg shadow-primary-500/25 transition-all hover:from-primary-400 hover:to-primary-500 hover:shadow-xl hover:shadow-primary-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+              className={`mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-4 py-2.5 font-medium text-white shadow-lg shadow-primary-500/25 transition-all hover:from-primary-400 hover:to-primary-500 hover:shadow-xl hover:shadow-primary-500/30 disabled:cursor-not-allowed disabled:opacity-50 ${
+                loading ? 'cursor-progress' : 'cursor-pointer'
+              }`}
             >
               {loading ? (
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />

@@ -57,7 +57,7 @@ export function Dashboard() {
           </div>
           <button
             onClick={toggleTheme}
-            className="mb-1 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-surface-800/60 transition-all hover:bg-surface-100 hover:text-surface-800 dark:hover:bg-surface-200"
+            className="mb-1 flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-surface-800/60 transition-all hover:bg-surface-100 hover:text-surface-800 dark:hover:bg-surface-200"
           >
             {isDark ? (
               <Sun className="h-4.5 w-4.5" />
@@ -69,7 +69,7 @@ export function Dashboard() {
           <button
             id="sidebar-signout"
             onClick={signOut}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-danger-500 transition-all hover:bg-danger-500/5"
+            className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-danger-500 transition-all hover:bg-danger-500/5"
           >
             <LogOut className="h-4.5 w-4.5" />
             Sair

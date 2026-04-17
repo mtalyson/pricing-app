@@ -1,24 +1,15 @@
 import { create } from 'zustand';
 
 import { supabase } from '~/lib/supabase';
-import type { Category, CategoryFormData } from '~/types/database';
+import type { CategoriesState, CategoryFormData } from '~/types';
 
-interface CategoriesState {
-  categories: Category[];
-  loading: boolean;
-  error: string | null;
-  fetch: () => Promise<void>;
-  add: (data: CategoryFormData) => Promise<void>;
-  update: (id: string, data: CategoryFormData) => Promise<void>;
-  remove: (id: string) => Promise<void>;
-}
-
-export const useCategoriesStore = create<CategoriesState>(set => ({
+export const useCategoriesStore = create<CategoriesState>((set, get) => ({
   categories: [],
   loading: false,
   error: null,
 
   fetch: async () => {
+    if (get().loading) return;
     set({ loading: true, error: null });
     const { data, error } = await supabase
       .from('categories')

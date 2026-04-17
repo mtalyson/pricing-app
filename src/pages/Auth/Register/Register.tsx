@@ -159,7 +159,9 @@ export function Register() {
               id="register-submit"
               type="submit"
               disabled={loading}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-br from-accent-500 to-accent-600 px-4 py-2.5 font-medium text-white shadow-lg shadow-accent-500/25 transition-all hover:from-accent-400 hover:to-accent-500 hover:shadow-xl hover:shadow-accent-500/30 disabled:cursor-not-allowed disabled:opacity-50"
+              className={`mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-br from-accent-500 to-accent-600 px-4 py-2.5 font-medium text-white shadow-lg shadow-accent-500/25 transition-all hover:from-accent-400 hover:to-accent-500 hover:shadow-xl hover:shadow-accent-500/30 disabled:cursor-not-allowed disabled:opacity-50 ${
+                loading ? 'cursor-progress' : 'cursor-pointer'
+              }`}
             >
               {loading ? (
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />

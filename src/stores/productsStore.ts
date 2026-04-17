@@ -2,37 +2,20 @@ import { create } from 'zustand';
 
 import { supabase } from '~/lib/supabase';
 import type {
-  Product,
   ProductFormData,
-  ProductIngredient,
   ProductIngredientFormData,
-} from '~/types/database';
+  ProductsState,
+} from '~/types';
 
-interface ProductsState {
-  products: Product[];
-  loading: boolean;
-  error: string | null;
-  fetch: () => Promise<void>;
-  add: (data: ProductFormData) => Promise<Product | null>;
-  update: (id: string, data: Partial<ProductFormData>) => Promise<void>;
-  remove: (id: string) => Promise<void>;
-  productIngredients: ProductIngredient[];
-  fetchProductIngredients: (productId: string) => Promise<void>;
-  addProductIngredient: (
-    productId: string,
-    data: ProductIngredientFormData,
-  ) => Promise<void>;
-  removeProductIngredient: (id: string) => Promise<void>;
-  updateProductIngredient: (id: string, quantityUsed: number) => Promise<void>;
-}
-
-export const useProductsStore = create<ProductsState>(set => ({
+export const useProductsStore = create<ProductsState>((set, get) => ({
   products: [],
   loading: false,
+  ingredientsLoading: false,
   error: null,
   productIngredients: [],
 
   fetch: async () => {
+    if (get().loading) return;
     set({ loading: true, error: null });
     const { data, error } = await supabase
       .from('products')
@@ -109,16 +92,19 @@ export const useProductsStore = create<ProductsState>(set => ({
   },
 
   fetchProductIngredients: async (productId: string) => {
+    if (get().ingredientsLoading) return;
+    set({ ingredientsLoading: true });
+
     const { data, error } = await supabase
       .from('product_ingredients')
       .select('*')
       .eq('product_id', productId);
 
     if (error) {
-      set({ error: error.message });
+      set({ error: error.message, ingredientsLoading: false });
       return;
     }
-    set({ productIngredients: data ?? [] });
+    set({ productIngredients: data ?? [], ingredientsLoading: false });
   },
 
   addProductIngredient: async (
