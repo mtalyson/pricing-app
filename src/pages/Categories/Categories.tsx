@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Trash2, Pencil, Tag, X } from 'lucide-react';
+import { Plus, Trash2, Pencil, Tag, X, Search } from 'lucide-react';
 
 import { useCategoriesStore } from '~/stores/categoriesStore';
 import type { Category } from '~/types/database';
@@ -22,6 +22,7 @@ export function Categories() {
   const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(
     null,
   );
+  const [search, setSearch] = useState('');
 
   const {
     register,
@@ -39,6 +40,10 @@ export function Categories() {
     setEditingId(null);
     setShowForm(false);
   };
+
+  const filtered = categories.filter(c =>
+    c.name.toLowerCase().includes(search.toLowerCase()),
+  );
 
   const handleEdit = (cat: Category) => {
     setValue('name', cat.name);
@@ -80,6 +85,26 @@ export function Categories() {
           <Plus className="h-4 w-4" />
           Nova Categoria
         </button>
+      </div>
+
+      <div className="relative mb-4">
+        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-surface-800/30" />
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Buscar categoria..."
+          className="w-full rounded-xl border border-surface-200 bg-white py-2.5 pr-10 pl-10 text-sm text-surface-900 placeholder-surface-800/30 shadow-card transition-colors focus:border-primary-300 focus:ring-0 focus:outline-none"
+        />
+        {search && (
+          <button
+            onClick={() => setSearch('')}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-surface-100 hover:text-surface-800"
+            title="Limpar busca"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {error && (
@@ -152,16 +177,18 @@ export function Categories() {
         <div className="flex justify-center py-12">
           <div className="h-8 w-8 animate-spin rounded-full border-3 border-primary-200 border-t-primary-600" />
         </div>
-      ) : categories.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-surface-200 bg-white py-16">
           <Tag className="mb-3 h-10 w-10 text-surface-800/20" />
           <p className="text-sm font-medium text-surface-800/40">
-            Nenhuma categoria cadastrada
+            {search
+              ? 'Nenhuma categoria encontrada'
+              : 'Nenhuma categoria cadastrada'}
           </p>
         </div>
       ) : (
         <div className="space-y-2">
-          {categories.map(cat => (
+          {filtered.map(cat => (
             <div
               key={cat.id}
               className="flex items-center justify-between rounded-xl border border-surface-200 bg-white px-4 py-3 shadow-card hover:shadow-elevated transition-all"
