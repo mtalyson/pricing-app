@@ -3,11 +3,15 @@ import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Trash2, Package, X, Eye } from 'lucide-react';
+import { Plus, Trash2, Package, X, Edit2 } from 'lucide-react';
 
 import { useCategoriesStore } from '~/stores/categoriesStore';
 import { useProductsStore } from '~/stores/productsStore';
 
+import {
+  editProductSchema,
+  type EditProductFormValues,
+} from './ProductDetail/validation';
 import {
   defaultProductFormValues,
   productSchema,
@@ -17,7 +21,8 @@ import {
 export function Products() {
   const navigate = useNavigate();
 
-  const { products, loading, error, fetch, add, remove } = useProductsStore();
+  const { products, loading, error, fetch, add, remove, update } =
+    useProductsStore();
   const { categories, fetch: fetchCategories } = useCategoriesStore();
 
   const [showForm, setShowForm] = useState(false);
@@ -30,6 +35,20 @@ export function Products() {
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: defaultProductFormValues,
+  });
+
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(
+    null,
+  );
+
+  const {
+    register: registerEdit,
+    handleSubmit: handleEditSubmit,
+    reset: resetEdit,
+    formState: { errors: editErrors },
+  } = useForm<EditProductFormValues>({
+    resolver: zodResolver(editProductSchema),
   });
 
   useEffect(() => {
@@ -49,6 +68,14 @@ export function Products() {
       resetForm();
       navigate(`/products/${product.id}`);
     }
+  };
+
+  const onEditSubmit = async (data: EditProductFormValues) => {
+    if (!editingProductId) return;
+
+    await update(editingProductId, data);
+
+    setEditingProductId(null);
   };
 
   const getCategoryName = (id: string | null) => {
@@ -192,14 +219,20 @@ export function Products() {
                 </div>
                 <div className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                   <button
-                    onClick={() => navigate(`/products/${p.id}`)}
-                    className="rounded-lg p-1.5 text-surface-800/40 hover:bg-primary-50 hover:text-primary-600"
-                    title="Ver"
+                    onClick={() => {
+                      resetEdit({
+                        name: p.name,
+                        category_id: p.category_id,
+                      });
+                      setEditingProductId(p.id);
+                    }}
+                    className="rounded-lg p-1.5 text-surface-800/40 hover:bg-surface-100 hover:text-primary-500"
+                    title="Editar"
                   >
-                    <Eye className="h-4 w-4" />
+                    <Edit2 className="h-4 w-4" />
                   </button>
                   <button
-                    onClick={() => remove(p.id)}
+                    onClick={() => setDeletingProductId(p.id)}
                     className="rounded-lg p-1.5 text-surface-800/40 hover:bg-danger-500/5 hover:text-danger-500"
                     title="Excluir"
                   >
@@ -219,6 +252,119 @@ export function Products() {
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {editingProductId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-surface-200 bg-white p-6 shadow-modal">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-surface-900">
+                Editar Produto
+              </h2>
+              <button
+                onClick={() => setEditingProductId(null)}
+                className="rounded-lg p-1 text-surface-800/40 hover:bg-surface-100"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form
+              onSubmit={handleEditSubmit(onEditSubmit)}
+              className="space-y-4"
+            >
+              <div>
+                <label
+                  htmlFor="edit-product-name"
+                  className="mb-1 block text-sm font-medium text-surface-800/70"
+                >
+                  Nome do produto
+                </label>
+                <input
+                  id="edit-product-name"
+                  type="text"
+                  {...registerEdit('name')}
+                  className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 text-sm focus:outline-none ${editErrors.name ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
+                />
+                {editErrors.name && (
+                  <p className="mt-1 text-xs text-danger-500">
+                    {editErrors.name.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label
+                  htmlFor="edit-product-category"
+                  className="mb-1 block text-sm font-medium text-surface-800/70"
+                >
+                  Categoria
+                </label>
+                <select
+                  id="edit-product-category"
+                  {...registerEdit('category_id')}
+                  className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 text-sm focus:outline-none ${editErrors.category_id ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
+                >
+                  <option value="">Sem categoria</option>
+                  {categories.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                {editErrors.category_id && (
+                  <p className="mt-1 text-xs text-danger-500">
+                    {editErrors.category_id.message}
+                  </p>
+                )}
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingProductId(null)}
+                  className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-primary-500/20"
+                >
+                  Salvar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {deletingProductId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-surface-200 bg-white p-6 shadow-modal">
+            <h2 className="mb-2 text-lg font-semibold text-surface-900">
+              Excluir Produto
+            </h2>
+            <p className="mb-6 text-sm text-surface-800/70">
+              Tem certeza que deseja excluir este produto? Esta ação não pode
+              ser desfeita e removerá todas as informações da ficha técnica.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeletingProductId(null)}
+                className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  remove(deletingProductId);
+                  setDeletingProductId(null);
+                }}
+                className="flex-1 rounded-xl bg-danger-500 px-4 py-2.5 text-sm font-medium text-white shadow-md hover:bg-danger-600 transition-colors"
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
