@@ -1,16 +1,27 @@
 import { NavLink, Outlet } from 'react-router-dom';
 
-import { ChefHat, LogOut } from 'lucide-react';
+import { ChefHat, LogOut, Moon, Sun } from 'lucide-react';
 
 import { navItems } from '~/constants';
 import { useAuthStore } from '~/stores/authStore';
+import { useThemeStore } from '~/stores/themeStore';
 
 export function Dashboard() {
   const { user, signOut } = useAuthStore();
+  const { theme, setTheme } = useThemeStore();
+  const isDark =
+    theme === 'dark' ||
+    (theme === 'system' &&
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+  const toggleTheme = () => {
+    setTheme(isDark ? 'light' : 'dark');
+  };
 
   return (
-    <div className="flex min-h-screen bg-surface-50">
-      <aside className="fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-surface-200 bg-white shadow-card">
+    <div className="flex min-h-screen bg-surface-50 transition-colors duration-200">
+      <aside className="fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r border-surface-200 bg-white shadow-card dark:bg-surface-100">
         <div className="flex items-center gap-3 border-b border-surface-200 px-5 py-4">
           <div className="flex items-center justify-center rounded-xl bg-linear-to-br from-primary-500 to-primary-700 p-2 shadow-md shadow-primary-500/20">
             <ChefHat className="h-5 w-5 text-white" />
@@ -29,8 +40,8 @@ export function Dashboard() {
               className={({ isActive }) =>
                 `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
                   isActive
-                    ? 'bg-primary-50 text-primary-700 shadow-sm'
-                    : 'text-surface-800/60 hover:bg-surface-100 hover:text-surface-800'
+                    ? 'bg-primary-50 text-primary-700 shadow-sm dark:bg-primary-500/10 dark:text-primary-400'
+                    : 'text-surface-800/60 hover:bg-surface-100 hover:text-surface-800 dark:hover:bg-surface-200'
                 }`
               }
             >
@@ -45,9 +56,20 @@ export function Dashboard() {
             {user?.email}
           </div>
           <button
+            onClick={toggleTheme}
+            className="mb-1 flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-surface-800/60 transition-all hover:bg-surface-100 hover:text-surface-800 dark:hover:bg-surface-200"
+          >
+            {isDark ? (
+              <Sun className="h-4.5 w-4.5" />
+            ) : (
+              <Moon className="h-4.5 w-4.5" />
+            )}
+            {isDark ? 'Modo Claro' : 'Modo Escuro'}
+          </button>
+          <button
             id="sidebar-signout"
             onClick={signOut}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-danger-500 transition-all hover:bg-danger-500/5"
+            className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-danger-500 transition-all hover:bg-danger-500/5"
           >
             <LogOut className="h-4.5 w-4.5" />
             Sair

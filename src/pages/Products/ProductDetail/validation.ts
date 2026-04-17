@@ -8,6 +8,16 @@ export const costParamsSchema = z.object({
 
 export type CostParamsValues = z.infer<typeof costParamsSchema>;
 
+export const editProductSchema = z.object({
+  name: z.string().min(1, 'Nome do produto é obrigatório'),
+  category_id: z
+    .string()
+    .nullable()
+    .transform(v => v || null),
+});
+
+export type EditProductFormValues = z.infer<typeof editProductSchema>;
+
 export const recipeIngredientSchema = z.object({
   ingredient_id: z.string().min(1, 'O ingrediente é obrigatório'),
   quantity_used: z.number().min(0.01, 'A quantidade deve ser maior que zero'),

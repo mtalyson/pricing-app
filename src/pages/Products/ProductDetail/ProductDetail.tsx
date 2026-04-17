@@ -13,6 +13,7 @@ import {
   Truck,
   Warehouse,
   Save,
+  Edit2,
 } from 'lucide-react';
 
 import { UNIT_SUFFIX } from '~/constants';
@@ -20,6 +21,7 @@ import { useCategoriesStore } from '~/stores/categoriesStore';
 import { useIngredientsStore } from '~/stores/ingredientsStore';
 import { useProductsStore } from '~/stores/productsStore';
 import type { UnitOfMeasure } from '~/types/database';
+import { formatCurrency } from '~/utils';
 import {
   calculateUnitCost,
   calculateIngredientCost,
@@ -31,8 +33,10 @@ import {
   defaultCostParamsValues,
   defaultRecipeIngredientValues,
   recipeIngredientSchema,
+  editProductSchema,
   type CostParamsValues,
   type RecipeIngredientFormValues,
+  type EditProductFormValues,
 } from './validation';
 
 export function ProductDetail() {
@@ -54,6 +58,10 @@ export function ProductDetail() {
   const { categories, fetch: fetchCategories } = useCategoriesStore();
 
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [deletingIngredientId, setDeletingIngredientId] = useState<
+    string | null
+  >(null);
 
   const {
     register: registerParams,
@@ -76,6 +84,15 @@ export function ProductDetail() {
     defaultValues: defaultRecipeIngredientValues,
   });
 
+  const {
+    register: registerEdit,
+    handleSubmit: handleEditSubmit,
+    reset: resetEdit,
+    formState: { errors: editErrors, isDirty: isEditDirty },
+  } = useForm<EditProductFormValues>({
+    resolver: zodResolver(editProductSchema),
+  });
+
   const localDeliveryFee = watchParams('delivery_fee_percentage') || 0;
   const localFixedCosts = watchParams('fixed_costs_allowance') || 0;
   const localProfitMargin = watchParams('profit_margin_desired') || 0;
@@ -88,24 +105,12 @@ export function ProductDetail() {
   const usedIds = new Set(productIngredients.map(pi => pi.ingredient_id));
   const availableIngredients = ingredients.filter(i => !usedIds.has(i.id));
 
-  useEffect(() => {
-    if (product?.id !== prevProductId) {
-      setPrevProductId(product?.id);
-
-      if (product) {
-        resetParams({
-          delivery_fee_percentage: product.delivery_fee_percentage,
-          fixed_costs_allowance: product.fixed_costs_allowance,
-          profit_margin_desired: product.profit_margin_desired,
-        });
-      }
-    }
-  }, [product, prevProductId, resetParams]);
-
   const recipeCost = useMemo(() => {
     return productIngredients.reduce((total, pi) => {
       const ing = ingredients.find(i => i.id === pi.ingredient_id);
+
       if (!ing) return total;
+
       return (
         total +
         calculateIngredientCost({
@@ -134,15 +139,11 @@ export function ProductDetail() {
     localProfitMargin,
   ]);
 
-  const formatCurrency = (v: number) => {
-    return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  };
-
   const onSaveParams = async (data: CostParamsValues) => {
     if (!product) return;
 
     await update(product.id, data);
-    resetParams(data); // Resets isDirty
+    resetParams(data);
   };
 
   const onAddIngredient = async (data: RecipeIngredientFormValues) => {
@@ -153,6 +154,27 @@ export function ProductDetail() {
     setShowAddModal(false);
     resetIngredient();
   };
+
+  const onEditProduct = async (data: EditProductFormValues) => {
+    if (!product) return;
+
+    await update(product.id, data);
+    setShowEditModal(false);
+  };
+
+  useEffect(() => {
+    if (product?.id !== prevProductId) {
+      setPrevProductId(product?.id);
+
+      if (product) {
+        resetParams({
+          delivery_fee_percentage: product.delivery_fee_percentage,
+          fixed_costs_allowance: product.fixed_costs_allowance,
+          profit_margin_desired: product.profit_margin_desired,
+        });
+      }
+    }
+  }, [product, prevProductId, resetParams]);
 
   useEffect(() => {
     fetchProducts();
@@ -183,7 +205,7 @@ export function ProductDetail() {
         <p className="text-surface-800/50">Produto não encontrado.</p>
         <button
           onClick={() => navigate('/products')}
-          className="mt-3 text-sm text-primary-500 hover:text-primary-600"
+          className="mt-3 cursor-pointer text-sm text-primary-500 hover:text-primary-600"
         >
           ← Voltar
         </button>
@@ -196,7 +218,7 @@ export function ProductDetail() {
       <div className="mb-6">
         <button
           onClick={() => navigate('/products')}
-          className="mb-3 flex items-center gap-1 text-sm text-surface-800/50 hover:text-primary-500 transition-colors"
+          className="mb-3 flex cursor-pointer items-center gap-1 text-sm text-surface-800/50 transition-colors hover:text-primary-500"
         >
           <ArrowLeft className="h-4 w-4" /> Voltar
         </button>
@@ -210,12 +232,25 @@ export function ProductDetail() {
                 'Sem categoria'}
             </p>
           </div>
+          <button
+            onClick={() => {
+              resetEdit({
+                name: product.name,
+                category_id: product.category_id,
+              });
+              setShowEditModal(true);
+            }}
+            className="cursor-pointer flex items-center gap-2 rounded-xl bg-white dark:bg-surface-100 px-3 py-1.5 text-sm font-medium text-surface-700 shadow-sm border border-surface-200 hover:bg-surface-50 dark:hover:bg-surface-200 hover:text-primary-600 transition-colors"
+          >
+            <Edit2 className="h-4 w-4" />
+            Editar
+          </button>
         </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5">
         <div className="lg:col-span-3 space-y-4">
-          <div className="rounded-2xl border border-surface-200 bg-white p-5 shadow-card">
+          <div className="rounded-2xl border border-surface-200 bg-white dark:bg-surface-100 p-5 shadow-card">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-surface-900">
                 Ficha Técnica
@@ -224,7 +259,7 @@ export function ProductDetail() {
                 id="add-recipe-ingredient-btn"
                 onClick={() => setShowAddModal(true)}
                 disabled={availableIngredients.length === 0}
-                className="flex items-center gap-1 rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-600 transition-colors hover:bg-primary-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="cursor-pointer flex items-center gap-1 rounded-lg bg-primary-50 dark:bg-primary-500/10 px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 transition-colors hover:bg-primary-100 dark:hover:bg-primary-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Plus className="h-3.5 w-3.5" /> Adicionar
               </button>
@@ -247,7 +282,7 @@ export function ProductDetail() {
                   return (
                     <div
                       key={pi.id}
-                      className="flex items-center justify-between rounded-xl bg-surface-50 px-4 py-3"
+                      className="flex items-center justify-between rounded-xl bg-surface-50 dark:bg-surface-200/50 px-4 py-3"
                     >
                       <div>
                         <p className="text-sm font-medium text-surface-900">
@@ -269,8 +304,8 @@ export function ProductDetail() {
                           {formatCurrency(cost)}
                         </span>
                         <button
-                          onClick={() => removeProductIngredient(pi.id)}
-                          className="rounded-lg p-1 text-surface-800/30 hover:text-danger-500"
+                          onClick={() => setDeletingIngredientId(pi.id)}
+                          className="cursor-pointer rounded-lg p-1 text-surface-800/30 hover:bg-danger-500/5 dark:hover:bg-danger-500/10 hover:text-danger-500 dark:hover:text-danger-400"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -292,7 +327,7 @@ export function ProductDetail() {
 
           <form
             onSubmit={handleParamsSubmit(onSaveParams)}
-            className="rounded-2xl border border-surface-200 bg-white p-5 shadow-card"
+            className="rounded-2xl border border-surface-200 bg-white dark:bg-surface-100 p-5 shadow-card"
           >
             <h2 className="mb-4 text-lg font-semibold text-surface-900">
               Parâmetros de Custo
@@ -308,13 +343,10 @@ export function ProductDetail() {
                 <input
                   id="delivery-fee"
                   type="number"
-                  step="0.1"
-                  min="0"
-                  max="100"
                   {...registerParams('delivery_fee_percentage', {
-                    valueAsNumber: true,
+                    setValueAs: (v: string) => (v === '' ? 0 : parseFloat(v)),
                   })}
-                  className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3 py-2 text-sm focus:border-primary-300 focus:outline-none"
+                  className="w-full rounded-xl border border-surface-200 bg-surface-50 dark:bg-surface-200/50 px-3 py-2 text-sm focus:border-primary-300 focus:outline-none"
                 />
               </div>
               <div>
@@ -327,12 +359,10 @@ export function ProductDetail() {
                 <input
                   id="fixed-costs"
                   type="number"
-                  step="0.01"
-                  min="0"
                   {...registerParams('fixed_costs_allowance', {
-                    valueAsNumber: true,
+                    setValueAs: (v: string) => (v === '' ? 0 : parseFloat(v)),
                   })}
-                  className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3 py-2 text-sm focus:border-primary-300 focus:outline-none"
+                  className="w-full rounded-xl border border-surface-200 bg-surface-50 dark:bg-surface-200/50 px-3 py-2 text-sm focus:border-primary-300 focus:outline-none"
                 />
               </div>
               <div>
@@ -345,13 +375,10 @@ export function ProductDetail() {
                 <input
                   id="profit-margin"
                   type="number"
-                  step="0.1"
-                  min="0"
-                  max="100"
                   {...registerParams('profit_margin_desired', {
-                    valueAsNumber: true,
+                    setValueAs: (v: string) => (v === '' ? 0 : parseFloat(v)),
                   })}
-                  className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3 py-2 text-sm focus:border-primary-300 focus:outline-none"
+                  className="w-full rounded-xl border border-surface-200 bg-surface-50 dark:bg-surface-200/50 px-3 py-2 text-sm focus:border-primary-300 focus:outline-none"
                 />
               </div>
             </div>
@@ -361,7 +388,7 @@ export function ProductDetail() {
                 id="save-cost-params"
                 type="submit"
                 disabled={!paramsDirty || savingParams}
-                className="flex items-center gap-2 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-5 py-2 text-sm font-medium text-white shadow-md shadow-primary-500/20 transition-all hover:from-primary-400 hover:to-primary-500 disabled:cursor-not-allowed disabled:opacity-40"
+                className="cursor-pointer flex items-center gap-2 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-5 py-2 text-sm font-medium text-white shadow-md shadow-primary-500/20 transition-all hover:from-primary-400 hover:to-primary-500 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {savingParams ? (
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
@@ -446,14 +473,17 @@ export function ProductDetail() {
 
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl border border-surface-200 bg-white p-6 shadow-modal">
+          <div className="w-full max-w-sm rounded-2xl border border-surface-200 bg-white dark:bg-surface-100 p-6 shadow-modal">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-surface-900">
                 Adicionar Ingrediente
               </h2>
               <button
-                onClick={() => setShowAddModal(false)}
-                className="rounded-lg p-1 text-surface-800/40 hover:bg-surface-100"
+                onClick={() => {
+                  setShowAddModal(false);
+                  resetIngredient();
+                }}
+                className="cursor-pointer rounded-lg p-1 text-surface-800/40 hover:bg-surface-100 dark:hover:bg-surface-200"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -472,7 +502,7 @@ export function ProductDetail() {
                 <select
                   id="recipe-ingredient"
                   {...registerIngredient('ingredient_id')}
-                  className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 text-sm focus:outline-none ${ingredientErrors.ingredient_id ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
+                  className={`w-full rounded-xl border bg-surface-50 dark:bg-surface-200/50 px-3 py-2.5 text-sm focus:outline-none ${ingredientErrors.ingredient_id ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
                 >
                   <option value="">Selecione...</option>
                   {availableIngredients.map(i => (
@@ -498,9 +528,9 @@ export function ProductDetail() {
                   id="recipe-qty"
                   type="number"
                   {...registerIngredient('quantity_used', {
-                    valueAsNumber: true,
+                    setValueAs: (v: string) => (v === '' ? 0 : parseFloat(v)),
                   })}
-                  className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 text-sm focus:outline-none ${ingredientErrors.quantity_used ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
+                  className={`w-full rounded-xl border bg-surface-50 dark:bg-surface-200/50 px-3 py-2.5 text-sm focus:outline-none ${ingredientErrors.quantity_used ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
                   placeholder="Ex: 200"
                 />
                 {ingredientErrors.quantity_used && (
@@ -512,20 +542,140 @@ export function ProductDetail() {
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100"
+                  onClick={() => {
+                    setShowAddModal(false);
+                    resetIngredient();
+                  }}
+                  className="cursor-pointer flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 dark:hover:bg-surface-200"
                 >
                   Cancelar
                 </button>
                 <button
                   id="recipe-ingredient-submit"
                   type="submit"
-                  className="flex-1 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-md"
+                  className="cursor-pointer flex-1 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-md"
                 >
                   Adicionar
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-surface-200 bg-white dark:bg-surface-100 p-6 shadow-modal">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-surface-900">
+                Editar Produto
+              </h2>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="rounded-lg p-1 text-surface-800/40 hover:bg-surface-100 dark:hover:bg-surface-200"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form
+              onSubmit={handleEditSubmit(onEditProduct)}
+              className="space-y-4"
+            >
+              <div>
+                <label
+                  htmlFor="edit-name"
+                  className="mb-1 block text-sm font-medium text-surface-800/70"
+                >
+                  Nome do Produto
+                </label>
+                <input
+                  id="edit-name"
+                  type="text"
+                  {...registerEdit('name')}
+                  className={`w-full rounded-xl border bg-surface-50 dark:bg-surface-200/50 px-3 py-2.5 text-sm focus:outline-none ${editErrors.name ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
+                />
+                {editErrors.name && (
+                  <p className="mt-1 text-xs text-danger-500">
+                    {editErrors.name.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label
+                  htmlFor="edit-category"
+                  className="mb-1 block text-sm font-medium text-surface-800/70"
+                >
+                  Categoria
+                </label>
+                <select
+                  id="edit-category"
+                  {...registerEdit('category_id')}
+                  className={`w-full rounded-xl border bg-surface-50 dark:bg-surface-200/50 px-3 py-2.5 text-sm focus:outline-none ${editErrors.category_id ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
+                >
+                  <option value="">Sem categoria</option>
+                  {categories.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                {editErrors.category_id && (
+                  <p className="mt-1 text-xs text-danger-500">
+                    {editErrors.category_id.message}
+                  </p>
+                )}
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 dark:hover:bg-surface-200"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={!isEditDirty}
+                  className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-medium shadow-md transition-all ${
+                    !isEditDirty
+                      ? 'cursor-not-allowed border border-surface-200 bg-surface-200 text-surface-800/60 dark:border-surface-500 dark:bg-surface-600 dark:text-surface-400 shadow-none'
+                      : 'cursor-pointer text-white bg-linear-to-br from-primary-500 to-primary-600 shadow-primary-500/20 hover:from-primary-400 hover:to-primary-500'
+                  }`}
+                >
+                  Atualizar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {deletingIngredientId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-surface-200 bg-white dark:bg-surface-100 p-6 shadow-modal">
+            <h2 className="mb-2 text-lg font-semibold text-surface-900">
+              Remover Ingrediente
+            </h2>
+            <p className="mb-6 text-sm text-surface-800/70">
+              Tem certeza que deseja remover este ingrediente da receita?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeletingIngredientId(null)}
+                className="cursor-pointer flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 transition-colors hover:bg-surface-100 dark:hover:bg-surface-200"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  removeProductIngredient(deletingIngredientId);
+                  setDeletingIngredientId(null);
+                }}
+                className="cursor-pointer flex-1 rounded-xl bg-danger-500 px-4 py-2.5 text-sm font-medium text-white shadow-md hover:bg-danger-600 transition-colors"
+              >
+                Remover
+              </button>
+            </div>
           </div>
         </div>
       )}
