@@ -1,13 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-type Theme = 'light' | 'dark' | 'system';
-
-interface ThemeState {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-  initialize: () => void;
-}
+import type { Theme, ThemeState } from '~/types';
 
 const applyTheme = (theme: Theme) => {
   const root = window.document.documentElement;

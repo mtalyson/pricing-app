@@ -6,7 +6,8 @@ import { Plus, Trash2, Pencil, ShoppingBasket, X, Search } from 'lucide-react';
 
 import { UNIT_LABELS, UNIT_SUFFIX } from '~/constants';
 import { useIngredientsStore } from '~/stores/ingredientsStore';
-import type { Ingredient, UnitOfMeasure } from '~/types/database';
+import type { Ingredient, UnitOfMeasure } from '~/types';
+import { formatCurrency } from '~/utils';
 import { calculateUnitCost } from '~/utils/calculations/pricing';
 
 import {
@@ -19,36 +20,31 @@ export function Ingredients() {
   const { ingredients, loading, error, fetch, add, update, remove } =
     useIngredientsStore();
 
+  const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingIngredientId, setDeletingIngredientId] = useState<
     string | null
   >(null);
-  const [search, setSearch] = useState('');
 
   const {
     register,
     handleSubmit,
     reset,
-    setValue,
     watch,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<IngredientFormValues>({
     resolver: zodResolver(ingredientSchema),
     defaultValues: defaultIngredientFormValues,
   });
 
-  const watchPrice = watch('purchase_price') || 0;
-  const watchQty = watch('purchase_quantity') || 0;
-  const watchUnit = watch('unit_of_measure') || 'g';
+  const watchPrice = watch('purchase_price');
+  const watchQty = watch('purchase_quantity');
+  const watchUnit = watch('unit_of_measure');
 
   const filtered = ingredients.filter(i =>
     i.name.toLowerCase().includes(search.toLowerCase()),
   );
-
-  const formatCurrency = (v: number) => {
-    return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  };
 
   const resetForm = () => {
     reset({
@@ -57,15 +53,19 @@ export function Ingredients() {
       purchase_price: 0,
       purchase_quantity: 0,
     });
+
     setEditingId(null);
     setShowForm(false);
   };
 
   const handleEdit = (ingredient: Ingredient) => {
-    setValue('name', ingredient.name);
-    setValue('unit_of_measure', ingredient.unit_of_measure as UnitOfMeasure);
-    setValue('purchase_price', ingredient.purchase_price);
-    setValue('purchase_quantity', ingredient.purchase_quantity);
+    reset({
+      name: ingredient.name,
+      unit_of_measure: ingredient.unit_of_measure as UnitOfMeasure,
+      purchase_price: ingredient.purchase_price,
+      purchase_quantity: ingredient.purchase_quantity,
+    });
+
     setEditingId(ingredient.id);
     setShowForm(true);
   };
@@ -76,6 +76,7 @@ export function Ingredients() {
     } else {
       await add(data);
     }
+
     resetForm();
   };
 
@@ -95,11 +96,11 @@ export function Ingredients() {
 
         <button
           id="ingredient-add-btn"
+          className="flex items-center gap-2 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-primary-500/20 transition-all hover:from-primary-400 hover:to-primary-500 hover:shadow-xl cursor-pointer"
           onClick={() => {
             resetForm();
             setShowForm(true);
           }}
-          className="flex items-center gap-2 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-primary-500/20 transition-all hover:from-primary-400 hover:to-primary-500 hover:shadow-xl"
         >
           <Plus className="h-4 w-4" />
           Novo Ingrediente
@@ -112,15 +113,15 @@ export function Ingredients() {
           id="ingredient-search"
           type="text"
           value={search}
-          onChange={e => setSearch(e.target.value)}
           placeholder="Buscar ingrediente..."
           className="w-full rounded-xl border border-surface-200 bg-white dark:bg-surface-100 py-2.5 pr-10 pl-10 text-sm text-surface-900 placeholder-surface-800/30 shadow-card transition-colors focus:border-primary-300 focus:ring-0 focus:outline-none"
+          onChange={e => setSearch(e.target.value)}
         />
         {search && (
           <button
-            onClick={() => setSearch('')}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-surface-100 hover:text-surface-800 dark:hover:bg-surface-200"
             title="Limpar busca"
+            className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-surface-100 hover:text-surface-800 dark:hover:bg-surface-200"
+            onClick={() => setSearch('')}
           >
             <X className="h-4 w-4" />
           </button>
@@ -143,7 +144,7 @@ export function Ingredients() {
 
               <button
                 onClick={resetForm}
-                className="rounded-lg p-1 text-surface-800/40 hover:bg-surface-100 hover:text-surface-800"
+                className="rounded-lg p-1 text-surface-800/40 hover:bg-surface-100 hover:text-surface-800 cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -161,9 +162,9 @@ export function Ingredients() {
                 <input
                   id="ingredient-name"
                   type="text"
-                  {...register('name')}
                   className={`w-full rounded-xl border bg-surface-50 dark:bg-surface-200/50 px-3 py-2.5 text-sm text-surface-900 focus:outline-none ${errors.name ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
                   placeholder="Ex: Farinha de trigo"
+                  {...register('name')}
                 />
                 {errors.name && (
                   <p className="mt-1 text-xs text-danger-500">
@@ -182,8 +183,8 @@ export function Ingredients() {
 
                 <select
                   id="ingredient-unit"
-                  {...register('unit_of_measure')}
                   className={`w-full rounded-xl border bg-surface-50 dark:bg-surface-200/50 px-3 py-2.5 text-sm text-surface-900 focus:outline-none ${errors.unit_of_measure ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
+                  {...register('unit_of_measure')}
                 >
                   {Object.entries(UNIT_LABELS).map(([val, label]) => (
                     <option key={val} value={val}>
@@ -210,11 +211,11 @@ export function Ingredients() {
                   <input
                     id="ingredient-price"
                     type="number"
-                    step="0.01"
-                    min="0"
-                    {...register('purchase_price', { valueAsNumber: true })}
-                    className={`w-full rounded-xl border bg-surface-50 dark:bg-surface-200/50 px-3 py-2.5 text-sm text-surface-900 focus:outline-none ${errors.purchase_price ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
                     placeholder="0,00"
+                    className={`w-full rounded-xl border bg-surface-50 dark:bg-surface-200/50 px-3 py-2.5 text-sm text-surface-900 focus:outline-none ${errors.purchase_price ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
+                    {...register('purchase_price', {
+                      setValueAs: (v: string) => (v === '' ? 0 : parseFloat(v)),
+                    })}
                   />
                   {errors.purchase_price && (
                     <p className="mt-1 text-xs text-danger-500">
@@ -234,9 +235,11 @@ export function Ingredients() {
                   <input
                     id="ingredient-qty"
                     type="number"
-                    {...register('purchase_quantity', { valueAsNumber: true })}
                     className={`w-full rounded-xl border bg-surface-50 dark:bg-surface-200/50 px-3 py-2.5 text-sm text-surface-900 focus:outline-none ${errors.purchase_quantity ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
                     placeholder="1000"
+                    {...register('purchase_quantity', {
+                      setValueAs: (v: string) => (v === '' ? 0 : parseFloat(v)),
+                    })}
                   />
                   {errors.purchase_quantity && (
                     <p className="mt-1 text-xs text-danger-500">
@@ -260,7 +263,7 @@ export function Ingredients() {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 transition-colors hover:bg-surface-100 dark:hover:bg-surface-200"
+                  className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 transition-colors hover:bg-surface-100 dark:hover:bg-surface-200 cursor-pointer"
                 >
                   Cancelar
                 </button>
@@ -268,9 +271,14 @@ export function Ingredients() {
                 <button
                   id="ingredient-submit"
                   type="submit"
-                  className="flex-1 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-primary-500/20 transition-all hover:from-primary-400 hover:to-primary-500"
+                  disabled={editingId !== null && !isDirty}
+                  className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-medium shadow-md transition-all ${
+                    editingId !== null && !isDirty
+                      ? 'cursor-not-allowed border border-surface-200 bg-surface-200 text-surface-800/60 dark:border-surface-500 dark:bg-surface-600 dark:text-surface-400 shadow-none'
+                      : 'text-white bg-linear-to-br from-primary-500 to-primary-600 shadow-primary-500/20 hover:from-primary-400 hover:to-primary-500 cursor-pointer'
+                  }`}
                 >
-                  {editingId ? 'Salvar' : 'Adicionar'}
+                  {editingId ? 'Atualizar' : 'Adicionar'}
                 </button>
               </div>
             </form>
@@ -283,15 +291,23 @@ export function Ingredients() {
           <div className="h-8 w-8 animate-spin rounded-full border-3 border-primary-200 border-t-primary-600" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-surface-200 bg-white py-16">
-          <ShoppingBasket className="mb-3 h-10 w-10 text-surface-800/20" />
-          <p className="text-sm font-medium text-surface-800/40">
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-100 py-16">
+          <ShoppingBasket className="mb-3 h-10 w-10 text-surface-800/20 dark:text-surface-400/30" />
+          <p className="text-sm font-medium text-surface-800/40 dark:text-surface-400/60">
             {search
               ? 'Nenhum ingrediente encontrado'
               : 'Nenhum ingrediente cadastrado'}
           </p>
-          {!search && (
-            <p className="mt-1 text-xs text-surface-800/30">
+          {search ? (
+            <button
+              onClick={() => setSearch('')}
+              className="mt-3 flex items-center gap-1.5 rounded-lg border border-surface-200 dark:border-surface-700 px-3 py-1.5 text-xs font-medium text-surface-800/50 dark:text-surface-400/60 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-600 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/10 dark:hover:text-primary-400 cursor-pointer"
+            >
+              <X className="h-3 w-3" />
+              Limpar busca
+            </button>
+          ) : (
+            <p className="mt-1 text-xs text-surface-800/30 dark:text-surface-400/40">
               Clique em &quot;Novo Ingrediente&quot; para começar.
             </p>
           )}
@@ -352,16 +368,16 @@ export function Ingredients() {
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
                         <button
-                          onClick={() => handleEdit(ingredient)}
-                          className="rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-primary-500/10 dark:hover:text-primary-400"
                           title="Editar"
+                          className="cursor-pointer rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-primary-500/10 dark:hover:text-primary-400"
+                          onClick={() => handleEdit(ingredient)}
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => setDeletingIngredientId(ingredient.id)}
-                          className="rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-danger-500/5 hover:text-danger-500 dark:hover:bg-danger-500/10"
                           title="Excluir"
+                          className="cursor-pointer rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-danger-500/5 hover:text-danger-500 dark:hover:bg-danger-500/10"
+                          onClick={() => setDeletingIngredientId(ingredient.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -388,17 +404,17 @@ export function Ingredients() {
             </p>
             <div className="flex gap-3">
               <button
+                className="cursor-pointer flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 dark:hover:bg-surface-200 transition-colors"
                 onClick={() => setDeletingIngredientId(null)}
-                className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 dark:hover:bg-surface-200 transition-colors"
               >
                 Cancelar
               </button>
               <button
+                className="cursor-pointer flex-1 rounded-xl bg-danger-500 px-4 py-2.5 text-sm font-medium text-white shadow-md hover:bg-danger-600 transition-colors"
                 onClick={() => {
                   remove(deletingIngredientId);
                   setDeletingIngredientId(null);
                 }}
-                className="flex-1 rounded-xl bg-danger-500 px-4 py-2.5 text-sm font-medium text-white shadow-md hover:bg-danger-600 transition-colors"
               >
                 Excluir
               </button>

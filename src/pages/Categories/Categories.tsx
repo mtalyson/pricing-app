@@ -17,36 +17,37 @@ export function Categories() {
   const { categories, loading, error, fetch, add, update, remove } =
     useCategoriesStore();
 
+  const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(
     null,
   );
-  const [search, setSearch] = useState('');
 
   const {
     register,
     handleSubmit,
     reset,
-    setValue,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
     defaultValues: defaultCategoryFormValues,
   });
 
-  const resetForm = () => {
-    reset();
-    setEditingId(null);
-    setShowForm(false);
-  };
-
   const filtered = categories.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()),
   );
 
+  const resetForm = () => {
+    reset();
+
+    setEditingId(null);
+    setShowForm(false);
+  };
+
   const handleEdit = (cat: Category) => {
-    setValue('name', cat.name);
+    reset({ name: cat.name });
+
     setEditingId(cat.id);
     setShowForm(true);
   };
@@ -57,6 +58,7 @@ export function Categories() {
     } else {
       await add(data);
     }
+
     resetForm();
   };
 
@@ -80,7 +82,7 @@ export function Categories() {
             resetForm();
             setShowForm(true);
           }}
-          className="flex items-center gap-2 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-primary-500/20 transition-all hover:from-primary-400 hover:to-primary-500"
+          className="cursor-pointer flex items-center gap-2 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-primary-500/20 transition-all hover:from-primary-400 hover:to-primary-500"
         >
           <Plus className="h-4 w-4" />
           Nova Categoria
@@ -99,7 +101,7 @@ export function Categories() {
         {search && (
           <button
             onClick={() => setSearch('')}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-surface-100 hover:text-surface-800 dark:hover:bg-surface-200"
+            className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-surface-100 hover:text-surface-800 dark:hover:bg-surface-200"
             title="Limpar busca"
           >
             <X className="h-4 w-4" />
@@ -123,7 +125,7 @@ export function Categories() {
 
               <button
                 onClick={resetForm}
-                className="rounded-lg p-1 text-surface-800/40 hover:bg-surface-100"
+                className="cursor-pointer rounded-lg p-1 text-surface-800/40 hover:bg-surface-100"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -143,7 +145,7 @@ export function Categories() {
                   type="text"
                   {...register('name')}
                   className={`w-full rounded-xl border bg-surface-50 dark:bg-surface-200/50 px-3 py-2.5 text-sm focus:outline-none ${errors.name ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
-                  placeholder="Ex: Pizzas, Doces..."
+                  placeholder="Ex: Pizza, Pastel..."
                 />
                 {errors.name && (
                   <p className="mt-1 text-xs text-danger-500">
@@ -156,16 +158,21 @@ export function Categories() {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 dark:hover:bg-surface-200"
+                  className="cursor-pointer flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 dark:hover:bg-surface-200"
                 >
                   Cancelar
                 </button>
                 <button
                   id="category-submit"
                   type="submit"
-                  className="flex-1 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-primary-500/20"
+                  disabled={editingId !== null && !isDirty}
+                  className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-medium shadow-md transition-all ${
+                    editingId !== null && !isDirty
+                      ? 'cursor-not-allowed border border-surface-200 bg-surface-200 text-surface-800/60 dark:border-surface-500 dark:bg-surface-600 dark:text-surface-400 shadow-none'
+                      : 'cursor-pointer text-white bg-linear-to-br from-primary-500 to-primary-600 shadow-primary-500/20 hover:from-primary-400 hover:to-primary-500'
+                  }`}
                 >
-                  {editingId ? 'Salvar' : 'Adicionar'}
+                  {editingId ? 'Atualizar' : 'Adicionar'}
                 </button>
               </div>
             </form>
@@ -185,6 +192,19 @@ export function Categories() {
               ? 'Nenhuma categoria encontrada'
               : 'Nenhuma categoria cadastrada'}
           </p>
+          {search ? (
+            <button
+              onClick={() => setSearch('')}
+              className="mt-3 flex items-center gap-1.5 rounded-lg border border-surface-200 dark:border-surface-700 px-3 py-1.5 text-xs font-medium text-surface-800/50 dark:text-surface-400/60 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-600 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/10 dark:hover:text-primary-400 cursor-pointer"
+            >
+              <X className="h-3 w-3" />
+              Limpar busca
+            </button>
+          ) : (
+            <p className="mt-1 text-xs text-surface-800/30 dark:text-surface-400/40">
+              Clique em &quot;Nova Categoria&quot; para começar.
+            </p>
+          )}
         </div>
       ) : (
         <div className="space-y-2">
@@ -203,7 +223,7 @@ export function Categories() {
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => handleEdit(cat)}
-                  className="rounded-lg p-1.5 text-surface-800/40 hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-primary-500/10 dark:hover:text-primary-400"
+                  className="cursor-pointer rounded-lg p-1.5 text-surface-800/40 hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-primary-500/10 dark:hover:text-primary-400"
                   title="Editar"
                 >
                   <Pencil className="h-4 w-4" />
@@ -211,7 +231,7 @@ export function Categories() {
 
                 <button
                   onClick={() => setDeletingCategoryId(cat.id)}
-                  className="rounded-lg p-1.5 text-surface-800/40 hover:bg-danger-500/5 hover:text-danger-500 dark:hover:bg-danger-500/10"
+                  className="cursor-pointer rounded-lg p-1.5 text-surface-800/40 hover:bg-danger-500/5 hover:text-danger-500 dark:hover:bg-danger-500/10"
                   title="Excluir"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -235,7 +255,7 @@ export function Categories() {
             <div className="flex gap-3">
               <button
                 onClick={() => setDeletingCategoryId(null)}
-                className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 dark:hover:bg-surface-200 transition-colors"
+                className="cursor-pointer flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 dark:hover:bg-surface-200 transition-colors"
               >
                 Cancelar
               </button>
@@ -244,7 +264,7 @@ export function Categories() {
                   remove(deletingCategoryId);
                   setDeletingCategoryId(null);
                 }}
-                className="flex-1 rounded-xl bg-danger-500 px-4 py-2.5 text-sm font-medium text-white shadow-md hover:bg-danger-600 transition-colors"
+                className="cursor-pointer flex-1 rounded-xl bg-danger-500 px-4 py-2.5 text-sm font-medium text-white shadow-md hover:bg-danger-600 transition-colors"
               >
                 Excluir
               </button>

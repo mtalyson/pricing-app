@@ -21,11 +21,16 @@ import {
 export function Products() {
   const navigate = useNavigate();
 
+  const { categories, fetch: fetchCategories } = useCategoriesStore();
   const { products, loading, error, fetch, add, remove, update } =
     useProductsStore();
-  const { categories, fetch: fetchCategories } = useCategoriesStore();
 
   const [showForm, setShowForm] = useState(false);
+  const [search, setSearch] = useState('');
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(
+    null,
+  );
 
   const {
     register,
@@ -37,34 +42,23 @@ export function Products() {
     defaultValues: defaultProductFormValues,
   });
 
-  const [editingProductId, setEditingProductId] = useState<string | null>(null);
-  const [deletingProductId, setDeletingProductId] = useState<string | null>(
-    null,
-  );
-  const [search, setSearch] = useState('');
-
   const {
     register: registerEdit,
     handleSubmit: handleEditSubmit,
     reset: resetEdit,
-    formState: { errors: editErrors },
+    formState: { errors: editErrors, isDirty: isEditDirty },
   } = useForm<EditProductFormValues>({
     resolver: zodResolver(editProductSchema),
   });
 
-  useEffect(() => {
-    fetch();
-    fetchCategories();
-  }, [fetch, fetchCategories]);
+  const filtered = products.filter(p =>
+    p.name.toLowerCase().includes(search.toLowerCase()),
+  );
 
   const resetForm = () => {
     reset();
     setShowForm(false);
   };
-
-  const filtered = products.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase()),
-  );
 
   const onSubmit = async (data: ProductFormValues) => {
     const product = await add(data);
@@ -89,6 +83,11 @@ export function Products() {
     return categories.find(c => c.id === id)?.name ?? '—';
   };
 
+  useEffect(() => {
+    fetch();
+    fetchCategories();
+  }, [fetch, fetchCategories]);
+
   return (
     <div className="mx-auto max-w-5xl">
       <div className="mb-6 flex items-center justify-between">
@@ -104,7 +103,7 @@ export function Products() {
             resetForm();
             setShowForm(true);
           }}
-          className="flex items-center gap-2 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-primary-500/20 transition-all hover:from-primary-400 hover:to-primary-500"
+          className="flex cursor-pointer items-center gap-2 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-primary-500/20 transition-all hover:from-primary-400 hover:to-primary-500"
         >
           <Plus className="h-4 w-4" /> Novo Produto
         </button>
@@ -122,7 +121,7 @@ export function Products() {
         {search && (
           <button
             onClick={() => setSearch('')}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-surface-100 hover:text-surface-800 dark:hover:bg-surface-200"
+            className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-surface-100 hover:text-surface-800 dark:hover:bg-surface-200"
             title="Limpar busca"
           >
             <X className="h-4 w-4" />
@@ -145,7 +144,7 @@ export function Products() {
               </h2>
               <button
                 onClick={resetForm}
-                className="rounded-lg p-1 text-surface-800/40 hover:bg-surface-100 dark:hover:bg-surface-200"
+                className="cursor-pointer rounded-lg p-1 text-surface-800/40 hover:bg-surface-100 dark:hover:bg-surface-200"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -200,14 +199,14 @@ export function Products() {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 dark:hover:bg-surface-200"
+                  className="cursor-pointer flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 dark:hover:bg-surface-200"
                 >
                   Cancelar
                 </button>
                 <button
                   id="product-submit"
                   type="submit"
-                  className="flex-1 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-primary-500/20"
+                  className="cursor-pointer flex-1 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-primary-500/20"
                 >
                   Criar Produto
                 </button>
@@ -227,6 +226,19 @@ export function Products() {
           <p className="text-sm font-medium text-surface-800/40">
             {search ? 'Nenhum produto encontrado' : 'Nenhum produto cadastrado'}
           </p>
+          {search ? (
+            <button
+              onClick={() => setSearch('')}
+              className="mt-3 flex items-center gap-1.5 rounded-lg border border-surface-200 dark:border-surface-700 px-3 py-1.5 text-xs font-medium text-surface-800/50 dark:text-surface-400/60 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-600 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/10 dark:hover:text-primary-400 cursor-pointer"
+            >
+              <X className="h-3 w-3" />
+              Limpar busca
+            </button>
+          ) : (
+            <p className="mt-1 text-xs text-surface-800/30 dark:text-surface-400/40">
+              Clique em &quot;Novo Produto&quot; para começar.
+            </p>
+          )}
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -251,14 +263,14 @@ export function Products() {
                       });
                       setEditingProductId(p.id);
                     }}
-                    className="rounded-lg p-1.5 text-surface-800/40 hover:bg-surface-100 hover:text-primary-500 dark:hover:bg-surface-200"
+                    className="cursor-pointer rounded-lg p-1.5 text-surface-800/40 hover:bg-surface-100 hover:text-primary-500 dark:hover:bg-surface-200"
                     title="Editar"
                   >
                     <Edit2 className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => setDeletingProductId(p.id)}
-                    className="rounded-lg p-1.5 text-surface-800/40 hover:bg-danger-500/5 hover:text-danger-500 dark:hover:bg-danger-500/10"
+                    className="cursor-pointer rounded-lg p-1.5 text-surface-800/40 hover:bg-danger-500/5 hover:text-danger-500 dark:hover:bg-danger-500/10"
                     title="Excluir"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -271,7 +283,7 @@ export function Products() {
               </div>
               <button
                 onClick={() => navigate(`/products/${p.id}`)}
-                className="mt-3 w-full rounded-lg bg-surface-50 dark:bg-surface-200/50 px-3 py-2 text-xs font-medium text-primary-600 dark:text-primary-400 transition-colors hover:bg-primary-50 dark:hover:bg-primary-500/10"
+                className="mt-3 cursor-pointer w-full rounded-lg bg-surface-50 dark:bg-surface-200/50 px-3 py-2 text-xs font-medium text-primary-600 dark:text-primary-400 transition-colors hover:bg-primary-50 dark:hover:bg-primary-500/10"
               >
                 Abrir Ficha Técnica →
               </button>
@@ -289,7 +301,7 @@ export function Products() {
               </h2>
               <button
                 onClick={() => setEditingProductId(null)}
-                className="rounded-lg p-1 text-surface-800/40 hover:bg-surface-100 dark:hover:bg-surface-200"
+                className="cursor-pointer rounded-lg p-1 text-surface-800/40 hover:bg-surface-100 dark:hover:bg-surface-200"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -346,15 +358,20 @@ export function Products() {
                 <button
                   type="button"
                   onClick={() => setEditingProductId(null)}
-                  className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 dark:hover:bg-surface-200"
+                  className="cursor-pointer flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 dark:hover:bg-surface-200"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-primary-500/20"
+                  disabled={!isEditDirty}
+                  className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-medium shadow-md transition-all ${
+                    !isEditDirty
+                      ? 'cursor-not-allowed border border-surface-200 bg-surface-200 text-surface-800/60 dark:border-surface-500 dark:bg-surface-600 dark:text-surface-400 shadow-none'
+                      : 'cursor-pointer text-white bg-linear-to-br from-primary-500 to-primary-600 shadow-primary-500/20 hover:from-primary-400 hover:to-primary-500'
+                  }`}
                 >
-                  Salvar
+                  Atualizar
                 </button>
               </div>
             </form>
@@ -375,7 +392,7 @@ export function Products() {
             <div className="flex gap-3">
               <button
                 onClick={() => setDeletingProductId(null)}
-                className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 dark:hover:bg-surface-200 transition-colors"
+                className="cursor-pointer flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 dark:hover:bg-surface-200 transition-colors"
               >
                 Cancelar
               </button>
@@ -384,7 +401,7 @@ export function Products() {
                   remove(deletingProductId);
                   setDeletingProductId(null);
                 }}
-                className="flex-1 rounded-xl bg-danger-500 px-4 py-2.5 text-sm font-medium text-white shadow-md hover:bg-danger-600 transition-colors"
+                className="cursor-pointer flex-1 rounded-xl bg-danger-500 px-4 py-2.5 text-sm font-medium text-white shadow-md hover:bg-danger-600 transition-colors"
               >
                 Excluir
               </button>
