@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Trash2, Pencil, Tag, X } from 'lucide-react';
+import { Plus, Trash2, Pencil, Tag, X, Search } from 'lucide-react';
 
 import { useCategoriesStore } from '~/stores/categoriesStore';
 import type { Category } from '~/types/database';
@@ -17,28 +17,37 @@ export function Categories() {
   const { categories, loading, error, fetch, add, update, remove } =
     useCategoriesStore();
 
+  const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(
+    null,
+  );
 
   const {
     register,
     handleSubmit,
     reset,
-    setValue,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<CategoryFormValues>({
     resolver: zodResolver(categorySchema),
     defaultValues: defaultCategoryFormValues,
   });
 
+  const filtered = categories.filter(c =>
+    c.name.toLowerCase().includes(search.toLowerCase()),
+  );
+
   const resetForm = () => {
     reset();
+
     setEditingId(null);
     setShowForm(false);
   };
 
   const handleEdit = (cat: Category) => {
-    setValue('name', cat.name);
+    reset({ name: cat.name });
+
     setEditingId(cat.id);
     setShowForm(true);
   };
@@ -49,6 +58,7 @@ export function Categories() {
     } else {
       await add(data);
     }
+
     resetForm();
   };
 
@@ -72,11 +82,31 @@ export function Categories() {
             resetForm();
             setShowForm(true);
           }}
-          className="flex items-center gap-2 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-primary-500/20 transition-all hover:from-primary-400 hover:to-primary-500"
+          className="cursor-pointer flex items-center gap-2 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-primary-500/20 transition-all hover:from-primary-400 hover:to-primary-500"
         >
           <Plus className="h-4 w-4" />
           Nova Categoria
         </button>
+      </div>
+
+      <div className="relative mb-4">
+        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-surface-800/30" />
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Buscar categoria..."
+          className="w-full rounded-xl border border-surface-200 bg-white dark:bg-surface-100 py-2.5 pr-10 pl-10 text-sm text-surface-900 placeholder-surface-800/30 shadow-card transition-colors focus:border-primary-300 focus:ring-0 focus:outline-none"
+        />
+        {search && (
+          <button
+            onClick={() => setSearch('')}
+            className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-surface-100 hover:text-surface-800 dark:hover:bg-surface-200"
+            title="Limpar busca"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {error && (
@@ -87,7 +117,7 @@ export function Categories() {
 
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl border border-surface-200 bg-white p-6 shadow-modal">
+          <div className="w-full max-w-sm rounded-2xl border border-surface-200 bg-white dark:bg-surface-100 p-6 shadow-modal">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-surface-900">
                 {editingId ? 'Editar Categoria' : 'Nova Categoria'}
@@ -95,7 +125,7 @@ export function Categories() {
 
               <button
                 onClick={resetForm}
-                className="rounded-lg p-1 text-surface-800/40 hover:bg-surface-100"
+                className="cursor-pointer rounded-lg p-1 text-surface-800/40 hover:bg-surface-100"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -114,8 +144,8 @@ export function Categories() {
                   id="category-name"
                   type="text"
                   {...register('name')}
-                  className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 text-sm focus:outline-none ${errors.name ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
-                  placeholder="Ex: Pizzas, Doces..."
+                  className={`w-full rounded-xl border bg-surface-50 dark:bg-surface-200/50 px-3 py-2.5 text-sm focus:outline-none ${errors.name ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
+                  placeholder="Ex: Pizza, Pastel..."
                 />
                 {errors.name && (
                   <p className="mt-1 text-xs text-danger-500">
@@ -128,16 +158,21 @@ export function Categories() {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100"
+                  className="cursor-pointer flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 dark:hover:bg-surface-200"
                 >
                   Cancelar
                 </button>
                 <button
                   id="category-submit"
                   type="submit"
-                  className="flex-1 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-primary-500/20"
+                  disabled={editingId !== null && !isDirty}
+                  className={`flex-1 rounded-xl px-4 py-2.5 text-sm font-medium shadow-md transition-all ${
+                    editingId !== null && !isDirty
+                      ? 'cursor-not-allowed border border-surface-200 bg-surface-200 text-surface-800/60 dark:border-surface-500 dark:bg-surface-600 dark:text-surface-400 shadow-none'
+                      : 'cursor-pointer text-white bg-linear-to-br from-primary-500 to-primary-600 shadow-primary-500/20 hover:from-primary-400 hover:to-primary-500'
+                  }`}
                 >
-                  {editingId ? 'Salvar' : 'Adicionar'}
+                  {editingId ? 'Atualizar' : 'Adicionar'}
                 </button>
               </div>
             </form>
@@ -149,23 +184,38 @@ export function Categories() {
         <div className="flex justify-center py-12">
           <div className="h-8 w-8 animate-spin rounded-full border-3 border-primary-200 border-t-primary-600" />
         </div>
-      ) : categories.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-surface-200 bg-white py-16">
+      ) : filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-surface-200 bg-white dark:bg-surface-100 py-16">
           <Tag className="mb-3 h-10 w-10 text-surface-800/20" />
           <p className="text-sm font-medium text-surface-800/40">
-            Nenhuma categoria cadastrada
+            {search
+              ? 'Nenhuma categoria encontrada'
+              : 'Nenhuma categoria cadastrada'}
           </p>
+          {search ? (
+            <button
+              onClick={() => setSearch('')}
+              className="mt-3 flex items-center gap-1.5 rounded-lg border border-surface-200 dark:border-surface-700 px-3 py-1.5 text-xs font-medium text-surface-800/50 dark:text-surface-400/60 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-600 dark:hover:border-primary-500/40 dark:hover:bg-primary-500/10 dark:hover:text-primary-400 cursor-pointer"
+            >
+              <X className="h-3 w-3" />
+              Limpar busca
+            </button>
+          ) : (
+            <p className="mt-1 text-xs text-surface-800/30 dark:text-surface-400/40">
+              Clique em &quot;Nova Categoria&quot; para começar.
+            </p>
+          )}
         </div>
       ) : (
         <div className="space-y-2">
-          {categories.map(cat => (
+          {filtered.map(cat => (
             <div
               key={cat.id}
-              className="flex items-center justify-between rounded-xl border border-surface-200 bg-white px-4 py-3 shadow-card hover:shadow-elevated transition-all"
+              className="flex items-center justify-between rounded-xl border border-surface-200 bg-white dark:bg-surface-100 px-4 py-3 shadow-card hover:shadow-elevated transition-all"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50">
-                  <Tag className="h-4 w-4 text-primary-500" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 dark:bg-primary-500/10">
+                  <Tag className="h-4 w-4 text-primary-500 dark:text-primary-400" />
                 </div>
                 <span className="font-medium text-surface-900">{cat.name}</span>
               </div>
@@ -173,15 +223,15 @@ export function Categories() {
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => handleEdit(cat)}
-                  className="rounded-lg p-1.5 text-surface-800/40 hover:bg-primary-50 hover:text-primary-600"
+                  className="cursor-pointer rounded-lg p-1.5 text-surface-800/40 hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-primary-500/10 dark:hover:text-primary-400"
                   title="Editar"
                 >
                   <Pencil className="h-4 w-4" />
                 </button>
 
                 <button
-                  onClick={() => remove(cat.id)}
-                  className="rounded-lg p-1.5 text-surface-800/40 hover:bg-danger-500/5 hover:text-danger-500"
+                  onClick={() => setDeletingCategoryId(cat.id)}
+                  className="cursor-pointer rounded-lg p-1.5 text-surface-800/40 hover:bg-danger-500/5 hover:text-danger-500 dark:hover:bg-danger-500/10"
                   title="Excluir"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -189,6 +239,37 @@ export function Categories() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {deletingCategoryId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-surface-200 bg-white dark:bg-surface-100 p-6 shadow-modal">
+            <h2 className="mb-2 text-lg font-semibold text-surface-900">
+              Excluir Categoria
+            </h2>
+            <p className="mb-6 text-sm text-surface-800/70">
+              Tem certeza que deseja excluir esta categoria? Esta ação não pode
+              ser desfeita.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeletingCategoryId(null)}
+                className="cursor-pointer flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 dark:hover:bg-surface-200 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  remove(deletingCategoryId);
+                  setDeletingCategoryId(null);
+                }}
+                className="cursor-pointer flex-1 rounded-xl bg-danger-500 px-4 py-2.5 text-sm font-medium text-white shadow-md hover:bg-danger-600 transition-colors"
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

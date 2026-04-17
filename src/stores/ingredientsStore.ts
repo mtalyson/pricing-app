@@ -1,24 +1,15 @@
 import { create } from 'zustand';
 
 import { supabase } from '~/lib/supabase';
-import type { Ingredient, IngredientFormData } from '~/types/database';
+import type { IngredientFormData, IngredientsState } from '~/types';
 
-interface IngredientsState {
-  ingredients: Ingredient[];
-  loading: boolean;
-  error: string | null;
-  fetch: () => Promise<void>;
-  add: (data: IngredientFormData) => Promise<void>;
-  update: (id: string, data: IngredientFormData) => Promise<void>;
-  remove: (id: string) => Promise<void>;
-}
-
-export const useIngredientsStore = create<IngredientsState>(set => ({
+export const useIngredientsStore = create<IngredientsState>((set, get) => ({
   ingredients: [],
   loading: false,
   error: null,
 
   fetch: async () => {
+    if (get().loading) return;
     set({ loading: true, error: null });
     const { data, error } = await supabase
       .from('ingredients')
