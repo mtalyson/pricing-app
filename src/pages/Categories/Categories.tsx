@@ -94,12 +94,12 @@ export function Categories() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Buscar categoria..."
-          className="w-full rounded-xl border border-surface-200 bg-white py-2.5 pr-10 pl-10 text-sm text-surface-900 placeholder-surface-800/30 shadow-card transition-colors focus:border-primary-300 focus:ring-0 focus:outline-none"
+          className="w-full rounded-xl border border-surface-200 bg-white dark:bg-surface-100 py-2.5 pr-10 pl-10 text-sm text-surface-900 placeholder-surface-800/30 shadow-card transition-colors focus:border-primary-300 focus:ring-0 focus:outline-none"
         />
         {search && (
           <button
             onClick={() => setSearch('')}
-            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-surface-100 hover:text-surface-800"
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-surface-100 hover:text-surface-800 dark:hover:bg-surface-200"
             title="Limpar busca"
           >
             <X className="h-4 w-4" />
@@ -115,7 +115,7 @@ export function Categories() {
 
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl border border-surface-200 bg-white p-6 shadow-modal">
+          <div className="w-full max-w-sm rounded-2xl border border-surface-200 bg-white dark:bg-surface-100 p-6 shadow-modal">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-surface-900">
                 {editingId ? 'Editar Categoria' : 'Nova Categoria'}
@@ -142,7 +142,7 @@ export function Categories() {
                   id="category-name"
                   type="text"
                   {...register('name')}
-                  className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 text-sm focus:outline-none ${errors.name ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
+                  className={`w-full rounded-xl border bg-surface-50 dark:bg-surface-200/50 px-3 py-2.5 text-sm focus:outline-none ${errors.name ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
                   placeholder="Ex: Pizzas, Doces..."
                 />
                 {errors.name && (
@@ -156,7 +156,7 @@ export function Categories() {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100"
+                  className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 dark:hover:bg-surface-200"
                 >
                   Cancelar
                 </button>
@@ -178,7 +178,7 @@ export function Categories() {
           <div className="h-8 w-8 animate-spin rounded-full border-3 border-primary-200 border-t-primary-600" />
         </div>
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-surface-200 bg-white py-16">
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-surface-200 bg-white dark:bg-surface-100 py-16">
           <Tag className="mb-3 h-10 w-10 text-surface-800/20" />
           <p className="text-sm font-medium text-surface-800/40">
             {search
@@ -191,11 +191,11 @@ export function Categories() {
           {filtered.map(cat => (
             <div
               key={cat.id}
-              className="flex items-center justify-between rounded-xl border border-surface-200 bg-white px-4 py-3 shadow-card hover:shadow-elevated transition-all"
+              className="flex items-center justify-between rounded-xl border border-surface-200 bg-white dark:bg-surface-100 px-4 py-3 shadow-card hover:shadow-elevated transition-all"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50">
-                  <Tag className="h-4 w-4 text-primary-500" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 dark:bg-primary-500/10">
+                  <Tag className="h-4 w-4 text-primary-500 dark:text-primary-400" />
                 </div>
                 <span className="font-medium text-surface-900">{cat.name}</span>
               </div>
@@ -203,7 +203,7 @@ export function Categories() {
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => handleEdit(cat)}
-                  className="rounded-lg p-1.5 text-surface-800/40 hover:bg-primary-50 hover:text-primary-600"
+                  className="rounded-lg p-1.5 text-surface-800/40 hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-primary-500/10 dark:hover:text-primary-400"
                   title="Editar"
                 >
                   <Pencil className="h-4 w-4" />
@@ -211,7 +211,7 @@ export function Categories() {
 
                 <button
                   onClick={() => setDeletingCategoryId(cat.id)}
-                  className="rounded-lg p-1.5 text-surface-800/40 hover:bg-danger-500/5 hover:text-danger-500"
+                  className="rounded-lg p-1.5 text-surface-800/40 hover:bg-danger-500/5 hover:text-danger-500 dark:hover:bg-danger-500/10"
                   title="Excluir"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -224,7 +224,7 @@ export function Categories() {
 
       {deletingCategoryId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl border border-surface-200 bg-white p-6 shadow-modal">
+          <div className="w-full max-w-sm rounded-2xl border border-surface-200 bg-white dark:bg-surface-100 p-6 shadow-modal">
             <h2 className="mb-2 text-lg font-semibold text-surface-900">
               Excluir Categoria
             </h2>
@@ -235,7 +235,7 @@ export function Categories() {
             <div className="flex gap-3">
               <button
                 onClick={() => setDeletingCategoryId(null)}
-                className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 transition-colors"
+                className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 dark:hover:bg-surface-200 transition-colors"
               >
                 Cancelar
               </button>

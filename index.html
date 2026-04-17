@@ -11,6 +11,26 @@
     <title>PricingApp — Precificação Inteligente</title>
   </head>
   <body>
+    <script>
+      (function() {
+        try {
+          const stored = localStorage.getItem('theme-storage');
+          let theme = 'system';
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed.state && parsed.state.theme) {
+              theme = parsed.state.theme;
+            }
+          }
+          if (theme === 'system') {
+            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (systemDark) document.documentElement.classList.add('dark');
+          } else if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
