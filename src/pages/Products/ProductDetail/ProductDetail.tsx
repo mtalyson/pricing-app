@@ -13,6 +13,7 @@ import {
   Truck,
   Warehouse,
   Save,
+  Edit2,
 } from 'lucide-react';
 
 import { UNIT_SUFFIX } from '~/constants';
@@ -31,8 +32,10 @@ import {
   defaultCostParamsValues,
   defaultRecipeIngredientValues,
   recipeIngredientSchema,
+  editProductSchema,
   type CostParamsValues,
   type RecipeIngredientFormValues,
+  type EditProductFormValues,
 } from './validation';
 
 export function ProductDetail() {
@@ -54,6 +57,7 @@ export function ProductDetail() {
   const { categories, fetch: fetchCategories } = useCategoriesStore();
 
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   const {
     register: registerParams,
@@ -74,6 +78,15 @@ export function ProductDetail() {
   } = useForm<RecipeIngredientFormValues>({
     resolver: zodResolver(recipeIngredientSchema),
     defaultValues: defaultRecipeIngredientValues,
+  });
+
+  const {
+    register: registerEdit,
+    handleSubmit: handleEditSubmit,
+    reset: resetEdit,
+    formState: { errors: editErrors },
+  } = useForm<EditProductFormValues>({
+    resolver: zodResolver(editProductSchema),
   });
 
   const localDeliveryFee = watchParams('delivery_fee_percentage') || 0;
@@ -154,6 +167,13 @@ export function ProductDetail() {
     resetIngredient();
   };
 
+  const onEditProduct = async (data: EditProductFormValues) => {
+    if (!product) return;
+
+    await update(product.id, data);
+    setShowEditModal(false);
+  };
+
   useEffect(() => {
     fetchProducts();
 
@@ -210,6 +230,19 @@ export function ProductDetail() {
                 'Sem categoria'}
             </p>
           </div>
+          <button
+            onClick={() => {
+              resetEdit({
+                name: product.name,
+                category_id: product.category_id,
+              });
+              setShowEditModal(true);
+            }}
+            className="flex items-center gap-2 rounded-xl bg-white px-3 py-1.5 text-sm font-medium text-surface-700 shadow-sm border border-surface-200 hover:bg-surface-50 hover:text-primary-600 transition-colors"
+          >
+            <Edit2 className="h-4 w-4" />
+            Editar
+          </button>
         </div>
       </div>
 
@@ -523,6 +556,88 @@ export function ProductDetail() {
                   className="flex-1 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-md"
                 >
                   Adicionar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-surface-200 bg-white p-6 shadow-modal">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-surface-900">
+                Editar Produto
+              </h2>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="rounded-lg p-1 text-surface-800/40 hover:bg-surface-100"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form
+              onSubmit={handleEditSubmit(onEditProduct)}
+              className="space-y-4"
+            >
+              <div>
+                <label
+                  htmlFor="edit-name"
+                  className="mb-1 block text-sm font-medium text-surface-800/70"
+                >
+                  Nome do Produto
+                </label>
+                <input
+                  id="edit-name"
+                  type="text"
+                  {...registerEdit('name')}
+                  className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 text-sm focus:outline-none ${editErrors.name ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
+                />
+                {editErrors.name && (
+                  <p className="mt-1 text-xs text-danger-500">
+                    {editErrors.name.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label
+                  htmlFor="edit-category"
+                  className="mb-1 block text-sm font-medium text-surface-800/70"
+                >
+                  Categoria
+                </label>
+                <select
+                  id="edit-category"
+                  {...registerEdit('category_id')}
+                  className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 text-sm focus:outline-none ${editErrors.category_id ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
+                >
+                  <option value="">Sem categoria</option>
+                  {categories.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                {editErrors.category_id && (
+                  <p className="mt-1 text-xs text-danger-500">
+                    {editErrors.category_id.message}
+                  </p>
+                )}
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-md"
+                >
+                  Salvar
                 </button>
               </div>
             </form>

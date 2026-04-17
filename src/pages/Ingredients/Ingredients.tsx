@@ -21,6 +21,9 @@ export function Ingredients() {
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingIngredientId, setDeletingIngredientId] = useState<
+    string | null
+  >(null);
   const [search, setSearch] = useState('');
 
   const {
@@ -347,7 +350,7 @@ export function Ingredients() {
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => remove(ingredient.id)}
+                          onClick={() => setDeletingIngredientId(ingredient.id)}
                           className="rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-danger-500/5 hover:text-danger-500"
                           title="Excluir"
                         >
@@ -360,6 +363,38 @@ export function Ingredients() {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {deletingIngredientId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-surface-200 bg-white p-6 shadow-modal">
+            <h2 className="mb-2 text-lg font-semibold text-surface-900">
+              Excluir Ingrediente
+            </h2>
+            <p className="mb-6 text-sm text-surface-800/70">
+              Tem certeza que deseja excluir este ingrediente? Esta ação não
+              pode ser desfeita e ele será removido das fichas técnicas onde é
+              usado.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeletingIngredientId(null)}
+                className="flex-1 rounded-xl border border-surface-200 px-4 py-2.5 text-sm font-medium text-surface-800/60 hover:bg-surface-100 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => {
+                  remove(deletingIngredientId);
+                  setDeletingIngredientId(null);
+                }}
+                className="flex-1 rounded-xl bg-danger-500 px-4 py-2.5 text-sm font-medium text-white shadow-md hover:bg-danger-600 transition-colors"
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
