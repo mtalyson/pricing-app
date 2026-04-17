@@ -114,8 +114,17 @@ export function Ingredients() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Buscar ingrediente..."
-          className="w-full rounded-xl border border-surface-200 bg-white py-2.5 pr-4 pl-10 text-sm text-surface-900 placeholder-surface-800/30 shadow-card transition-colors focus:border-primary-300 focus:ring-0 focus:outline-none"
+          className="w-full rounded-xl border border-surface-200 bg-white py-2.5 pr-10 pl-10 text-sm text-surface-900 placeholder-surface-800/30 shadow-card transition-colors focus:border-primary-300 focus:ring-0 focus:outline-none"
         />
+        {search && (
+          <button
+            onClick={() => setSearch('')}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-surface-100 hover:text-surface-800"
+            title="Limpar busca"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {error && (

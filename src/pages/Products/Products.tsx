@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Trash2, Package, X, Edit2 } from 'lucide-react';
+import { Plus, Trash2, Package, X, Edit2, Search } from 'lucide-react';
 
 import { useCategoriesStore } from '~/stores/categoriesStore';
 import { useProductsStore } from '~/stores/productsStore';
@@ -41,6 +41,7 @@ export function Products() {
   const [deletingProductId, setDeletingProductId] = useState<string | null>(
     null,
   );
+  const [search, setSearch] = useState('');
 
   const {
     register: registerEdit,
@@ -60,6 +61,10 @@ export function Products() {
     reset();
     setShowForm(false);
   };
+
+  const filtered = products.filter(p =>
+    p.name.toLowerCase().includes(search.toLowerCase()),
+  );
 
   const onSubmit = async (data: ProductFormValues) => {
     const product = await add(data);
@@ -103,6 +108,26 @@ export function Products() {
         >
           <Plus className="h-4 w-4" /> Novo Produto
         </button>
+      </div>
+
+      <div className="relative mb-4">
+        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-surface-800/30" />
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Buscar produto..."
+          className="w-full rounded-xl border border-surface-200 bg-white py-2.5 pr-10 pl-10 text-sm text-surface-900 placeholder-surface-800/30 shadow-card transition-colors focus:border-primary-300 focus:ring-0 focus:outline-none"
+        />
+        {search && (
+          <button
+            onClick={() => setSearch('')}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-surface-800/40 transition-colors hover:bg-surface-100 hover:text-surface-800"
+            title="Limpar busca"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {error && (
@@ -196,16 +221,16 @@ export function Products() {
         <div className="flex justify-center py-12">
           <div className="h-8 w-8 animate-spin rounded-full border-3 border-primary-200 border-t-primary-600" />
         </div>
-      ) : products.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-surface-200 bg-white py-16">
           <Package className="mb-3 h-10 w-10 text-surface-800/20" />
           <p className="text-sm font-medium text-surface-800/40">
-            Nenhum produto cadastrado
+            {search ? 'Nenhum produto encontrado' : 'Nenhum produto cadastrado'}
           </p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map(p => (
+          {filtered.map(p => (
             <div
               key={p.id}
               className="group rounded-2xl border border-surface-200 bg-white p-5 shadow-card transition-all hover:shadow-elevated"
