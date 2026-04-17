@@ -10,6 +10,7 @@
 |---|---|
 | Frontend | React 19 + TypeScript (Vite) |
 | Estilização | Tailwind CSS v4 + shadcn/ui |
+| Validação | React Hook Form + Zod |
 | Estado Global | Zustand |
 | Backend / BaaS | Supabase (PostgreSQL 17 + Auth + RLS) |
 | Roteamento | React Router v7 |
@@ -108,7 +109,11 @@ Lucro Líquido Esperado = preço_sugerido - custo_com_fixos - (preço_sugerido �
 ```
 src/
 ├── components/       # Componentes reutilizáveis (UI)
-│   └── ui/           # shadcn/ui components
+│   ├── Atoms/        # Componentes simples e reutilizáveis (buttons, inputs, etc)
+│   ├── Molecules/    # Combinações de átomos para criar componentes mais complexos
+│   ├── Organisms/    # Combinações de moléculas para criar componentes ainda mais complexos
+│   ├── Templates/    # Templates do layout (Dashboard Layout)
+├── constants/        # Constantes (units, currencies, etc)
 ├── hooks/            # Custom hooks (useAuth, useIngredients…)
 ├── lib/              # Configurações (supabase client, utils)
 ├── pages/            # Telas (Login, Register, Dashboard…)

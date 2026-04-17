@@ -1,29 +1,31 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 
-import { DashboardLayout } from '~/components/layout/DashboardLayout';
-import { CategoriesPage } from '~/pages/CategoriesPage';
-import { IngredientsPage } from '~/pages/IngredientsPage';
-import { LoginPage } from '~/pages/LoginPage';
-import { ProductDetailPage } from '~/pages/ProductDetailPage';
-import { ProductsPage } from '~/pages/ProductsPage';
-import { RegisterPage } from '~/pages/RegisterPage';
+import { Dashboard } from '~/components';
+import {
+  Categories,
+  Ingredients,
+  Login,
+  ProductDetail,
+  Products,
+  Register,
+} from '~/pages';
 
 import { ProtectedRoute } from './ProtectedRoute';
 
 export const router = createBrowserRouter([
   {
     path: '/login',
-    element: <LoginPage />,
+    element: <Login />,
   },
   {
     path: '/register',
-    element: <RegisterPage />,
+    element: <Register />,
   },
   {
     path: '/',
     element: (
       <ProtectedRoute>
-        <DashboardLayout />
+        <Dashboard />
       </ProtectedRoute>
     ),
     children: [
@@ -33,19 +35,19 @@ export const router = createBrowserRouter([
       },
       {
         path: 'ingredients',
-        element: <IngredientsPage />,
+        element: <Ingredients />,
       },
       {
         path: 'categories',
-        element: <CategoriesPage />,
+        element: <Categories />,
       },
       {
         path: 'products',
-        element: <ProductsPage />,
+        element: <Products />,
       },
       {
         path: 'products/:id',
-        element: <ProductDetailPage />,
+        element: <ProductDetail />,
       },
     ],
   },

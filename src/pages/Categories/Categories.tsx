@@ -1,36 +1,53 @@
 import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Trash2, Pencil, Tag, X } from 'lucide-react';
 
 import { useCategoriesStore } from '~/stores/categoriesStore';
 import type { Category } from '~/types/database';
 
-export function CategoriesPage() {
+import {
+  categorySchema,
+  defaultCategoryFormValues,
+  type CategoryFormValues,
+} from './validation';
+
+export function Categories() {
   const { categories, loading, error, fetch, add, update, remove } =
     useCategoriesStore();
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [name, setName] = useState('');
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm<CategoryFormValues>({
+    resolver: zodResolver(categorySchema),
+    defaultValues: defaultCategoryFormValues,
+  });
 
   const resetForm = () => {
-    setName('');
+    reset();
     setEditingId(null);
     setShowForm(false);
   };
 
   const handleEdit = (cat: Category) => {
-    setName(cat.name);
+    setValue('name', cat.name);
     setEditingId(cat.id);
     setShowForm(true);
   };
 
-  const handleSubmit = async (e: React.SubmitEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: CategoryFormValues) => {
     if (editingId) {
-      await update(editingId, { name });
+      await update(editingId, data);
     } else {
-      await add({ name });
+      await add(data);
     }
     resetForm();
   };
@@ -84,7 +101,7 @@ export function CategoriesPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
                 <label
                   htmlFor="category-name"
@@ -96,12 +113,15 @@ export function CategoriesPage() {
                 <input
                   id="category-name"
                   type="text"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  required
-                  className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3 py-2.5 text-sm focus:border-primary-300 focus:outline-none"
+                  {...register('name')}
+                  className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 text-sm focus:outline-none ${errors.name ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
                   placeholder="Ex: Pizzas, Doces..."
                 />
+                {errors.name && (
+                  <p className="mt-1 text-xs text-danger-500">
+                    {errors.name.message}
+                  </p>
+                )}
               </div>
 
               <div className="flex gap-3 pt-2">

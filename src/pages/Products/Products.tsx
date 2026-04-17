@@ -1,25 +1,35 @@
 import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Trash2, Package, X, Eye } from 'lucide-react';
 
 import { useCategoriesStore } from '~/stores/categoriesStore';
 import { useProductsStore } from '~/stores/productsStore';
-import type { ProductFormData } from '~/types/database';
 
-export function ProductsPage() {
+import {
+  defaultProductFormValues,
+  productSchema,
+  type ProductFormValues,
+} from './validation';
+
+export function Products() {
   const navigate = useNavigate();
 
   const { products, loading, error, fetch, add, remove } = useProductsStore();
   const { categories, fetch: fetchCategories } = useCategoriesStore();
 
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState<ProductFormData>({
-    name: '',
-    category_id: null,
-    profit_margin_desired: 30,
-    delivery_fee_percentage: 15,
-    fixed_costs_allowance: 0,
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ProductFormValues>({
+    resolver: zodResolver(productSchema),
+    defaultValues: defaultProductFormValues,
   });
 
   useEffect(() => {
@@ -28,21 +38,12 @@ export function ProductsPage() {
   }, [fetch, fetchCategories]);
 
   const resetForm = () => {
-    setFormData({
-      name: '',
-      category_id: null,
-      profit_margin_desired: 30,
-      delivery_fee_percentage: 15,
-      fixed_costs_allowance: 0,
-    });
-
+    reset();
     setShowForm(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const product = await add(formData);
+  const onSubmit = async (data: ProductFormValues) => {
+    const product = await add(data);
 
     if (product) {
       resetForm();
@@ -97,7 +98,7 @@ export function ProductsPage() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
                 <label
                   htmlFor="product-name"
@@ -108,14 +109,15 @@ export function ProductsPage() {
                 <input
                   id="product-name"
                   type="text"
-                  value={formData.name}
-                  onChange={e =>
-                    setFormData(f => ({ ...f, name: e.target.value }))
-                  }
-                  required
-                  className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3 py-2.5 text-sm focus:border-primary-300 focus:outline-none"
+                  {...register('name')}
+                  className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 text-sm focus:outline-none ${errors.name ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
                   placeholder="Ex: Pizza Margherita"
                 />
+                {errors.name && (
+                  <p className="mt-1 text-xs text-danger-500">
+                    {errors.name.message}
+                  </p>
+                )}
               </div>
               <div>
                 <label
@@ -126,14 +128,8 @@ export function ProductsPage() {
                 </label>
                 <select
                   id="product-category"
-                  value={formData.category_id ?? ''}
-                  onChange={e =>
-                    setFormData(f => ({
-                      ...f,
-                      category_id: e.target.value || null,
-                    }))
-                  }
-                  className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3 py-2.5 text-sm focus:border-primary-300 focus:outline-none"
+                  {...register('category_id')}
+                  className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 text-sm focus:outline-none ${errors.category_id ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
                 >
                   <option value="">Sem categoria</option>
                   {categories.map(c => (
@@ -142,6 +138,11 @@ export function ProductsPage() {
                     </option>
                   ))}
                 </select>
+                {errors.category_id && (
+                  <p className="mt-1 text-xs text-danger-500">
+                    {errors.category_id.message}
+                  </p>
+                )}
               </div>
               <div className="flex gap-3 pt-2">
                 <button

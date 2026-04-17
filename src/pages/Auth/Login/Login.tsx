@@ -1,22 +1,30 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { Link, Navigate } from 'react-router-dom';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { LogIn, Mail, Lock, ChefHat } from 'lucide-react';
 
 import { useAuthStore } from '~/stores/authStore';
 
-export function LoginPage() {
+import { loginSchema, type LoginFormValues } from './validation';
+
+export function Login() {
   const { user, signIn, loading, initialized, initialize, error, clearError } =
     useAuthStore();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+  });
 
-  const handleSubmit = async (e: React.SubmitEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: LoginFormValues) => {
     clearError();
     try {
-      await signIn(email, password);
+      await signIn(data.email, data.password);
     } catch {
       // Error is handled in the store
     }
@@ -71,7 +79,7 @@ export function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <label
                 htmlFor="login-email"
@@ -84,13 +92,16 @@ export function LoginPage() {
                 <input
                   id="login-email"
                   type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
                   placeholder="seu@email.com"
-                  required
-                  className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pr-4 pl-10 text-white placeholder-primary-300/30 transition-colors focus:border-primary-400/50 focus:bg-white/10 focus:ring-0 focus:outline-none"
+                  {...register('email')}
+                  className={`w-full rounded-xl border bg-white/5 py-2.5 pr-4 pl-10 text-white placeholder-primary-300/30 transition-colors focus:bg-white/10 focus:ring-0 focus:outline-none ${errors.email ? 'border-danger-500/50 focus:border-danger-500' : 'border-white/10 focus:border-primary-400/50'}`}
                 />
               </div>
+              {errors.email && (
+                <p className="mt-1 text-xs text-danger-500">
+                  {errors.email.message}
+                </p>
+              )}
             </div>
 
             <div>
@@ -105,14 +116,16 @@ export function LoginPage() {
                 <input
                   id="login-password"
                   type="password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  required
-                  minLength={6}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pr-4 pl-10 text-white placeholder-primary-300/30 transition-colors focus:border-primary-400/50 focus:bg-white/10 focus:ring-0 focus:outline-none"
+                  {...register('password')}
+                  className={`w-full rounded-xl border bg-white/5 py-2.5 pr-4 pl-10 text-white placeholder-primary-300/30 transition-colors focus:bg-white/10 focus:ring-0 focus:outline-none ${errors.password ? 'border-danger-500/50 focus:border-danger-500' : 'border-white/10 focus:border-primary-400/50'}`}
                 />
               </div>
+              {errors.password && (
+                <p className="mt-1 text-xs text-danger-500">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
 
             <button

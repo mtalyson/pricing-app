@@ -35,14 +35,13 @@ export interface ProductIngredient {
   quantity_used: number;
 }
 
-// Extended types for UI usage (with joined data)
 export interface IngredientWithCost extends Ingredient {
   cost_per_unit: number;
 }
 
 export interface ProductIngredientWithDetails extends ProductIngredient {
   ingredient: Ingredient;
-  cost: number; // quantity_used * (purchase_price / purchase_quantity)
+  cost: number;
 }
 
 export interface ProductWithDetails extends Product {
@@ -53,7 +52,6 @@ export interface ProductWithDetails extends Product {
   expected_profit: number;
 }
 
-// Form input types
 export interface CategoryFormData {
   name: string;
 }
@@ -67,7 +65,7 @@ export interface IngredientFormData {
 
 export interface ProductFormData {
   name: string;
-  category_id: string | null;
+  category_id?: string;
   profit_margin_desired: number;
   delivery_fee_percentage: number;
   fixed_costs_allowance: number;

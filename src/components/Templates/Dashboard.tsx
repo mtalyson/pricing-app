@@ -1,16 +1,11 @@
 import { NavLink, Outlet } from 'react-router-dom';
 
-import { ChefHat, Package, Tag, ShoppingBasket, LogOut } from 'lucide-react';
+import { ChefHat, LogOut } from 'lucide-react';
 
+import { navItems } from '~/constants';
 import { useAuthStore } from '~/stores/authStore';
 
-const navItems = [
-  { to: '/ingredients', label: 'Ingredientes', icon: ShoppingBasket },
-  { to: '/categories', label: 'Categorias', icon: Tag },
-  { to: '/products', label: 'Produtos', icon: Package },
-];
-
-export function DashboardLayout() {
+export function Dashboard() {
   const { user, signOut } = useAuthStore();
 
   return (

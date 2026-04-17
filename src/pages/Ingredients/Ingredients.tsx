@@ -1,44 +1,43 @@
 import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Trash2, Pencil, ShoppingBasket, X, Search } from 'lucide-react';
 
+import { UNIT_LABELS, UNIT_SUFFIX } from '~/constants';
 import { useIngredientsStore } from '~/stores/ingredientsStore';
-import type {
-  Ingredient,
-  IngredientFormData,
-  UnitOfMeasure,
-} from '~/types/database';
-import { calculateUnitCost } from '~/utils/pricing';
+import type { Ingredient, UnitOfMeasure } from '~/types/database';
+import { calculateUnitCost } from '~/utils/calculations/pricing';
 
-const UNIT_LABELS: Record<UnitOfMeasure, string> = {
-  g: 'Gramas (g)',
-  kg: 'Quilos (kg)',
-  ml: 'Mililitros (ml)',
-  l: 'Litros (l)',
-  un: 'Unidades (un)',
-};
+import {
+  defaultIngredientFormValues,
+  ingredientSchema,
+  type IngredientFormValues,
+} from './validation';
 
-const UNIT_SUFFIX: Record<UnitOfMeasure, string> = {
-  g: '/g',
-  kg: '/kg',
-  ml: '/ml',
-  l: '/l',
-  un: '/un',
-};
-
-export function IngredientsPage() {
+export function Ingredients() {
   const { ingredients, loading, error, fetch, add, update, remove } =
     useIngredientsStore();
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [formData, setFormData] = useState<IngredientFormData>({
-    name: '',
-    unit_of_measure: 'g',
-    purchase_price: 0,
-    purchase_quantity: 0,
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<IngredientFormValues>({
+    resolver: zodResolver(ingredientSchema),
+    defaultValues: defaultIngredientFormValues,
   });
+
+  const watchPrice = watch('purchase_price') || 0;
+  const watchQty = watch('purchase_quantity') || 0;
+  const watchUnit = watch('unit_of_measure') || 'g';
 
   const filtered = ingredients.filter(i =>
     i.name.toLowerCase().includes(search.toLowerCase()),
@@ -49,7 +48,7 @@ export function IngredientsPage() {
   };
 
   const resetForm = () => {
-    setFormData({
+    reset({
       name: '',
       unit_of_measure: 'g',
       purchase_price: 0,
@@ -60,22 +59,19 @@ export function IngredientsPage() {
   };
 
   const handleEdit = (ingredient: Ingredient) => {
-    setFormData({
-      name: ingredient.name,
-      unit_of_measure: ingredient.unit_of_measure as UnitOfMeasure,
-      purchase_price: ingredient.purchase_price,
-      purchase_quantity: ingredient.purchase_quantity,
-    });
+    setValue('name', ingredient.name);
+    setValue('unit_of_measure', ingredient.unit_of_measure as UnitOfMeasure);
+    setValue('purchase_price', ingredient.purchase_price);
+    setValue('purchase_quantity', ingredient.purchase_quantity);
     setEditingId(ingredient.id);
     setShowForm(true);
   };
 
-  const handleSubmit = async (e: React.SubmitEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: IngredientFormValues) => {
     if (editingId) {
-      await update(editingId, formData);
+      await update(editingId, data);
     } else {
-      await add(formData);
+      await add(data);
     }
     resetForm();
   };
@@ -141,7 +137,7 @@ export function IngredientsPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
                 <label
                   htmlFor="ingredient-name"
@@ -153,14 +149,15 @@ export function IngredientsPage() {
                 <input
                   id="ingredient-name"
                   type="text"
-                  value={formData.name}
-                  onChange={e =>
-                    setFormData(f => ({ ...f, name: e.target.value }))
-                  }
-                  required
-                  className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3 py-2.5 text-sm text-surface-900 focus:border-primary-300 focus:ring-0 focus:outline-none"
+                  {...register('name')}
+                  className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 text-sm text-surface-900 focus:outline-none ${errors.name ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
                   placeholder="Ex: Farinha de trigo"
                 />
+                {errors.name && (
+                  <p className="mt-1 text-xs text-danger-500">
+                    {errors.name.message}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -173,14 +170,8 @@ export function IngredientsPage() {
 
                 <select
                   id="ingredient-unit"
-                  value={formData.unit_of_measure}
-                  onChange={e =>
-                    setFormData(f => ({
-                      ...f,
-                      unit_of_measure: e.target.value as UnitOfMeasure,
-                    }))
-                  }
-                  className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3 py-2.5 text-sm text-surface-900 focus:border-primary-300 focus:ring-0 focus:outline-none"
+                  {...register('unit_of_measure')}
+                  className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 text-sm text-surface-900 focus:outline-none ${errors.unit_of_measure ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
                 >
                   {Object.entries(UNIT_LABELS).map(([val, label]) => (
                     <option key={val} value={val}>
@@ -188,6 +179,11 @@ export function IngredientsPage() {
                     </option>
                   ))}
                 </select>
+                {errors.unit_of_measure && (
+                  <p className="mt-1 text-xs text-danger-500">
+                    {errors.unit_of_measure.message}
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -204,17 +200,15 @@ export function IngredientsPage() {
                     type="number"
                     step="0.01"
                     min="0"
-                    value={formData.purchase_price || ''}
-                    onChange={e =>
-                      setFormData(f => ({
-                        ...f,
-                        purchase_price: parseFloat(e.target.value) || 0,
-                      }))
-                    }
-                    required
-                    className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3 py-2.5 text-sm text-surface-900 focus:border-primary-300 focus:ring-0 focus:outline-none"
+                    {...register('purchase_price', { valueAsNumber: true })}
+                    className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 text-sm text-surface-900 focus:outline-none ${errors.purchase_price ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
                     placeholder="0,00"
                   />
+                  {errors.purchase_price && (
+                    <p className="mt-1 text-xs text-danger-500">
+                      {errors.purchase_price.message}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -228,37 +222,27 @@ export function IngredientsPage() {
                   <input
                     id="ingredient-qty"
                     type="number"
-                    step="0.01"
-                    min="0.01"
-                    value={formData.purchase_quantity || ''}
-                    onChange={e =>
-                      setFormData(f => ({
-                        ...f,
-                        purchase_quantity: parseFloat(e.target.value) || 0,
-                      }))
-                    }
-                    required
-                    className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3 py-2.5 text-sm text-surface-900 focus:border-primary-300 focus:ring-0 focus:outline-none"
+                    {...register('purchase_quantity', { valueAsNumber: true })}
+                    className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 text-sm text-surface-900 focus:outline-none ${errors.purchase_quantity ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
                     placeholder="1000"
                   />
+                  {errors.purchase_quantity && (
+                    <p className="mt-1 text-xs text-danger-500">
+                      {errors.purchase_quantity.message}
+                    </p>
+                  )}
                 </div>
               </div>
 
-              {formData.purchase_price > 0 &&
-                formData.purchase_quantity > 0 && (
-                  <div className="rounded-lg bg-accent-50 p-3 text-sm">
-                    <span className="text-accent-700 font-medium">
-                      Custo unitário:{' '}
-                      {formatCurrency(
-                        calculateUnitCost(
-                          formData.purchase_price,
-                          formData.purchase_quantity,
-                        ),
-                      )}
-                      {UNIT_SUFFIX[formData.unit_of_measure]}
-                    </span>
-                  </div>
-                )}
+              {watchPrice > 0 && watchQty > 0 && (
+                <div className="rounded-lg bg-accent-50 p-3 text-sm">
+                  <span className="text-accent-700 font-medium">
+                    Custo unitário:{' '}
+                    {formatCurrency(calculateUnitCost(watchPrice, watchQty))}
+                    {UNIT_SUFFIX[watchUnit]}
+                  </span>
+                </div>
+              )}
 
               <div className="flex gap-3 pt-2">
                 <button

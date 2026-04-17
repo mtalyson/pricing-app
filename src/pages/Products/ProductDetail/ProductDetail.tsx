@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { useParams, useNavigate } from 'react-router-dom';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   ArrowLeft,
   Plus,
@@ -13,6 +15,7 @@ import {
   Save,
 } from 'lucide-react';
 
+import { UNIT_SUFFIX } from '~/constants';
 import { useCategoriesStore } from '~/stores/categoriesStore';
 import { useIngredientsStore } from '~/stores/ingredientsStore';
 import { useProductsStore } from '~/stores/productsStore';
@@ -21,17 +24,18 @@ import {
   calculateUnitCost,
   calculateIngredientCost,
   calculatePricing,
-} from '~/utils/pricing';
+} from '~/utils/calculations/pricing';
 
-const UNIT_SUFFIX: Record<UnitOfMeasure, string> = {
-  g: 'g',
-  kg: 'kg',
-  ml: 'ml',
-  l: 'l',
-  un: 'un',
-};
+import {
+  costParamsSchema,
+  defaultCostParamsValues,
+  defaultRecipeIngredientValues,
+  recipeIngredientSchema,
+  type CostParamsValues,
+  type RecipeIngredientFormValues,
+} from './validation';
 
-export function ProductDetailPage() {
+export function ProductDetail() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
 
@@ -50,15 +54,31 @@ export function ProductDetailPage() {
   const { categories, fetch: fetchCategories } = useCategoriesStore();
 
   const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedIngredientId, setSelectedIngredientId] = useState('');
-  const [quantityUsed, setQuantityUsed] = useState(0);
 
-  const [localDeliveryFee, setLocalDeliveryFee] = useState(0);
-  const [localFixedCosts, setLocalFixedCosts] = useState(0);
-  const [localProfitMargin, setLocalProfitMargin] = useState(0);
+  const {
+    register: registerParams,
+    handleSubmit: handleParamsSubmit,
+    watch: watchParams,
+    reset: resetParams,
+    formState: { isDirty: paramsDirty, isSubmitting: savingParams },
+  } = useForm<CostParamsValues>({
+    resolver: zodResolver(costParamsSchema),
+    defaultValues: defaultCostParamsValues,
+  });
 
-  const [paramsDirty, setParamsDirty] = useState(false);
-  const [savingParams, setSavingParams] = useState(false);
+  const {
+    register: registerIngredient,
+    handleSubmit: handleIngredientSubmit,
+    reset: resetIngredient,
+    formState: { errors: ingredientErrors },
+  } = useForm<RecipeIngredientFormValues>({
+    resolver: zodResolver(recipeIngredientSchema),
+    defaultValues: defaultRecipeIngredientValues,
+  });
+
+  const localDeliveryFee = watchParams('delivery_fee_percentage') || 0;
+  const localFixedCosts = watchParams('fixed_costs_allowance') || 0;
+  const localProfitMargin = watchParams('profit_margin_desired') || 0;
 
   const [prevProductId, setPrevProductId] = useState<string | undefined>(
     undefined,
@@ -68,16 +88,19 @@ export function ProductDetailPage() {
   const usedIds = new Set(productIngredients.map(pi => pi.ingredient_id));
   const availableIngredients = ingredients.filter(i => !usedIds.has(i.id));
 
-  if (product?.id !== prevProductId) {
-    setPrevProductId(product?.id);
+  useEffect(() => {
+    if (product?.id !== prevProductId) {
+      setPrevProductId(product?.id);
 
-    if (product) {
-      setLocalDeliveryFee(product.delivery_fee_percentage);
-      setLocalFixedCosts(product.fixed_costs_allowance);
-      setLocalProfitMargin(product.profit_margin_desired);
-      setParamsDirty(false);
+      if (product) {
+        resetParams({
+          delivery_fee_percentage: product.delivery_fee_percentage,
+          fixed_costs_allowance: product.fixed_costs_allowance,
+          profit_margin_desired: product.profit_margin_desired,
+        });
+      }
     }
-  }
+  }, [product, prevProductId, resetParams]);
 
   const recipeCost = useMemo(() => {
     return productIngredients.reduce((total, pi) => {
@@ -115,34 +138,20 @@ export function ProductDetailPage() {
     return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   };
 
-  const handleSaveParams = async () => {
+  const onSaveParams = async (data: CostParamsValues) => {
     if (!product) return;
 
-    setSavingParams(true);
-
-    await update(product.id, {
-      delivery_fee_percentage: localDeliveryFee,
-      fixed_costs_allowance: localFixedCosts,
-      profit_margin_desired: localProfitMargin,
-    });
-
-    setParamsDirty(false);
-    setSavingParams(false);
+    await update(product.id, data);
+    resetParams(data); // Resets isDirty
   };
 
-  const handleAddIngredient = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const onAddIngredient = async (data: RecipeIngredientFormValues) => {
     if (!id) return;
 
-    await addProductIngredient(id, {
-      ingredient_id: selectedIngredientId,
-      quantity_used: quantityUsed,
-    });
+    await addProductIngredient(id, data);
 
     setShowAddModal(false);
-    setSelectedIngredientId('');
-    setQuantityUsed(0);
+    resetIngredient();
   };
 
   useEffect(() => {
@@ -281,7 +290,10 @@ export function ProductDetailPage() {
             )}
           </div>
 
-          <div className="rounded-2xl border border-surface-200 bg-white p-5 shadow-card">
+          <form
+            onSubmit={handleParamsSubmit(onSaveParams)}
+            className="rounded-2xl border border-surface-200 bg-white p-5 shadow-card"
+          >
             <h2 className="mb-4 text-lg font-semibold text-surface-900">
               Parâmetros de Custo
             </h2>
@@ -299,11 +311,9 @@ export function ProductDetailPage() {
                   step="0.1"
                   min="0"
                   max="100"
-                  value={localDeliveryFee}
-                  onChange={e => {
-                    setLocalDeliveryFee(parseFloat(e.target.value) || 0);
-                    setParamsDirty(true);
-                  }}
+                  {...registerParams('delivery_fee_percentage', {
+                    valueAsNumber: true,
+                  })}
                   className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3 py-2 text-sm focus:border-primary-300 focus:outline-none"
                 />
               </div>
@@ -319,11 +329,9 @@ export function ProductDetailPage() {
                   type="number"
                   step="0.01"
                   min="0"
-                  value={localFixedCosts}
-                  onChange={e => {
-                    setLocalFixedCosts(parseFloat(e.target.value) || 0);
-                    setParamsDirty(true);
-                  }}
+                  {...registerParams('fixed_costs_allowance', {
+                    valueAsNumber: true,
+                  })}
                   className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3 py-2 text-sm focus:border-primary-300 focus:outline-none"
                 />
               </div>
@@ -340,11 +348,9 @@ export function ProductDetailPage() {
                   step="0.1"
                   min="0"
                   max="100"
-                  value={localProfitMargin}
-                  onChange={e => {
-                    setLocalProfitMargin(parseFloat(e.target.value) || 0);
-                    setParamsDirty(true);
-                  }}
+                  {...registerParams('profit_margin_desired', {
+                    valueAsNumber: true,
+                  })}
                   className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3 py-2 text-sm focus:border-primary-300 focus:outline-none"
                 />
               </div>
@@ -353,7 +359,7 @@ export function ProductDetailPage() {
             <div className="mt-4 flex justify-end">
               <button
                 id="save-cost-params"
-                onClick={handleSaveParams}
+                type="submit"
                 disabled={!paramsDirty || savingParams}
                 className="flex items-center gap-2 rounded-xl bg-linear-to-br from-primary-500 to-primary-600 px-5 py-2 text-sm font-medium text-white shadow-md shadow-primary-500/20 transition-all hover:from-primary-400 hover:to-primary-500 disabled:cursor-not-allowed disabled:opacity-40"
               >
@@ -365,7 +371,7 @@ export function ProductDetailPage() {
                 Salvar Parâmetros
               </button>
             </div>
-          </div>
+          </form>
         </div>
 
         <div className="lg:col-span-2">
@@ -452,7 +458,10 @@ export function ProductDetailPage() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={handleAddIngredient} className="space-y-4">
+            <form
+              onSubmit={handleIngredientSubmit(onAddIngredient)}
+              className="space-y-4"
+            >
               <div>
                 <label
                   htmlFor="recipe-ingredient"
@@ -462,10 +471,8 @@ export function ProductDetailPage() {
                 </label>
                 <select
                   id="recipe-ingredient"
-                  value={selectedIngredientId}
-                  onChange={e => setSelectedIngredientId(e.target.value)}
-                  required
-                  className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3 py-2.5 text-sm focus:border-primary-300 focus:outline-none"
+                  {...registerIngredient('ingredient_id')}
+                  className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 text-sm focus:outline-none ${ingredientErrors.ingredient_id ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
                 >
                   <option value="">Selecione...</option>
                   {availableIngredients.map(i => (
@@ -474,6 +481,11 @@ export function ProductDetailPage() {
                     </option>
                   ))}
                 </select>
+                {ingredientErrors.ingredient_id && (
+                  <p className="mt-1 text-xs text-danger-500">
+                    {ingredientErrors.ingredient_id.message}
+                  </p>
+                )}
               </div>
               <div>
                 <label
@@ -485,16 +497,17 @@ export function ProductDetailPage() {
                 <input
                   id="recipe-qty"
                   type="number"
-                  step="0.01"
-                  min="0.01"
-                  value={quantityUsed || ''}
-                  onChange={e =>
-                    setQuantityUsed(parseFloat(e.target.value) || 0)
-                  }
-                  required
-                  className="w-full rounded-xl border border-surface-200 bg-surface-50 px-3 py-2.5 text-sm focus:border-primary-300 focus:outline-none"
+                  {...registerIngredient('quantity_used', {
+                    valueAsNumber: true,
+                  })}
+                  className={`w-full rounded-xl border bg-surface-50 px-3 py-2.5 text-sm focus:outline-none ${ingredientErrors.quantity_used ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
                   placeholder="Ex: 200"
                 />
+                {ingredientErrors.quantity_used && (
+                  <p className="mt-1 text-xs text-danger-500">
+                    {ingredientErrors.quantity_used.message}
+                  </p>
+                )}
               </div>
               <div className="flex gap-3 pt-2">
                 <button
