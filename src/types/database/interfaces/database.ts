@@ -65,7 +65,7 @@ export interface IngredientFormData {
 
 export interface ProductFormData {
   name: string;
-  category_id?: string;
+  category_id?: string | null;
   profit_margin_desired: number;
   delivery_fee_percentage: number;
   fixed_costs_allowance: number;
