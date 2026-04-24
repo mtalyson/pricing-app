@@ -37,6 +37,7 @@ import {
   type CostParamsValues,
   type RecipeIngredientFormValues,
   type EditProductFormValues,
+  defaultEditProductValues,
 } from './validation';
 
 export function ProductDetail() {
@@ -64,6 +65,16 @@ export function ProductDetail() {
   >(null);
 
   const {
+    register: registerIngredient,
+    handleSubmit: handleIngredientSubmit,
+    reset: resetIngredient,
+    formState: { errors: ingredientErrors },
+  } = useForm<RecipeIngredientFormValues>({
+    resolver: zodResolver(recipeIngredientSchema),
+    defaultValues: defaultRecipeIngredientValues,
+  });
+
+  const {
     register: registerParams,
     handleSubmit: handleParamsSubmit,
     watch: watchParams,
@@ -75,22 +86,13 @@ export function ProductDetail() {
   });
 
   const {
-    register: registerIngredient,
-    handleSubmit: handleIngredientSubmit,
-    reset: resetIngredient,
-    formState: { errors: ingredientErrors },
-  } = useForm<RecipeIngredientFormValues>({
-    resolver: zodResolver(recipeIngredientSchema),
-    defaultValues: defaultRecipeIngredientValues,
-  });
-
-  const {
     register: registerEdit,
     handleSubmit: handleEditSubmit,
     reset: resetEdit,
     formState: { errors: editErrors, isDirty: isEditDirty },
   } = useForm<EditProductFormValues>({
     resolver: zodResolver(editProductSchema),
+    defaultValues: defaultEditProductValues,
   });
 
   const localDeliveryFee = watchParams('delivery_fee_percentage') || 0;
@@ -343,6 +345,8 @@ export function ProductDetail() {
                 <input
                   id="delivery-fee"
                   type="number"
+                  step="0.01"
+                  min="0"
                   {...registerParams('delivery_fee_percentage', {
                     setValueAs: (v: string) => (v === '' ? 0 : parseFloat(v)),
                   })}
@@ -359,6 +363,8 @@ export function ProductDetail() {
                 <input
                   id="fixed-costs"
                   type="number"
+                  step="0.01"
+                  min="0"
                   {...registerParams('fixed_costs_allowance', {
                     setValueAs: (v: string) => (v === '' ? 0 : parseFloat(v)),
                   })}
@@ -375,6 +381,8 @@ export function ProductDetail() {
                 <input
                   id="profit-margin"
                   type="number"
+                  step="0.01"
+                  min="0"
                   {...registerParams('profit_margin_desired', {
                     setValueAs: (v: string) => (v === '' ? 0 : parseFloat(v)),
                   })}

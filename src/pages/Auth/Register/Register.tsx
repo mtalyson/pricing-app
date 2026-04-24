@@ -7,7 +7,11 @@ import { UserPlus, Mail, Lock, ChefHat } from 'lucide-react';
 
 import { useAuthStore } from '~/stores/authStore';
 
-import { registerSchema, type RegisterFormValues } from './validation';
+import {
+  defaultRegisterValues,
+  registerSchema,
+  type RegisterFormValues,
+} from './validation';
 
 export function Register() {
   const { user, signUp, loading, initialized, initialize, error, clearError } =
@@ -19,6 +23,7 @@ export function Register() {
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
+    defaultValues: defaultRegisterValues,
   });
 
   const displayError = error;
@@ -61,7 +66,7 @@ export function Register() {
           <div className="mb-4 inline-flex items-center justify-center rounded-2xl bg-linear-to-br from-accent-500 to-accent-700 p-3 shadow-lg shadow-accent-500/25">
             <ChefHat className="h-8 w-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white">PricingApp</h1>
+          <h1 className="text-2xl font-bold text-white">Smart Pricing App</h1>
           <p className="mt-1 text-sm text-primary-200/70">
             Crie sua conta gratuitamente
           </p>

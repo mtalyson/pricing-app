@@ -27,7 +27,9 @@ export function Dashboard() {
             <ChefHat className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="text-base font-bold text-surface-900">PricingApp</h1>
+            <h1 className="text-base font-bold text-surface-900">
+              Smart Pricing App
+            </h1>
             <p className="text-xs text-surface-800/50">Gestão de custos</p>
           </div>
         </div>

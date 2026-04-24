@@ -7,7 +7,11 @@ import { LogIn, Mail, Lock, ChefHat } from 'lucide-react';
 
 import { useAuthStore } from '~/stores/authStore';
 
-import { loginSchema, type LoginFormValues } from './validation';
+import {
+  defaultLoginValues,
+  loginSchema,
+  type LoginFormValues,
+} from './validation';
 
 export function Login() {
   const { user, signIn, loading, initialized, initialize, error, clearError } =
@@ -19,6 +23,7 @@ export function Login() {
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
+    defaultValues: defaultLoginValues,
   });
 
   const onSubmit = async (data: LoginFormValues) => {
@@ -58,7 +63,7 @@ export function Login() {
           <div className="mb-4 inline-flex items-center justify-center rounded-2xl bg-linear-to-br from-primary-500 to-primary-700 p-3 shadow-lg shadow-primary-500/25">
             <ChefHat className="h-8 w-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white">PricingApp</h1>
+          <h1 className="text-2xl font-bold text-white">Smart Pricing App</h1>
           <p className="mt-1 text-sm text-primary-200/70">
             Gestão de custos e precificação
           </p>

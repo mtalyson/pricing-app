@@ -173,68 +173,19 @@ export function Ingredients() {
                 )}
               </div>
 
-              <div>
-                <label
-                  htmlFor="ingredient-unit"
-                  className="mb-1 block text-sm font-medium text-surface-800/70"
-                >
-                  Unidade de medida
-                </label>
-
-                <select
-                  id="ingredient-unit"
-                  className={`w-full rounded-xl border bg-surface-50 dark:bg-surface-200/50 px-3 py-2.5 text-sm text-surface-900 focus:outline-none ${errors.unit_of_measure ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
-                  {...register('unit_of_measure')}
-                >
-                  {Object.entries(UNIT_LABELS).map(([val, label]) => (
-                    <option key={val} value={val}>
-                      {label}
-                    </option>
-                  ))}
-                </select>
-                {errors.unit_of_measure && (
-                  <p className="mt-1 text-xs text-danger-500">
-                    {errors.unit_of_measure.message}
-                  </p>
-                )}
-              </div>
-
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label
-                    htmlFor="ingredient-price"
-                    className="mb-1 block text-sm font-medium text-surface-800/70"
-                  >
-                    Preço de compra (R$)
-                  </label>
-
-                  <input
-                    id="ingredient-price"
-                    type="number"
-                    placeholder="0,00"
-                    className={`w-full rounded-xl border bg-surface-50 dark:bg-surface-200/50 px-3 py-2.5 text-sm text-surface-900 focus:outline-none ${errors.purchase_price ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
-                    {...register('purchase_price', {
-                      setValueAs: (v: string) => (v === '' ? 0 : parseFloat(v)),
-                    })}
-                  />
-                  {errors.purchase_price && (
-                    <p className="mt-1 text-xs text-danger-500">
-                      {errors.purchase_price.message}
-                    </p>
-                  )}
-                </div>
-
                 <div>
                   <label
                     htmlFor="ingredient-qty"
                     className="mb-1 block text-sm font-medium text-surface-800/70"
                   >
-                    Quantidade comprada
+                    Peso/Volume
                   </label>
-
                   <input
                     id="ingredient-qty"
                     type="number"
+                    step="0.01"
+                    min="0"
                     className={`w-full rounded-xl border bg-surface-50 dark:bg-surface-200/50 px-3 py-2.5 text-sm text-surface-900 focus:outline-none ${errors.purchase_quantity ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
                     placeholder="1000"
                     {...register('purchase_quantity', {
@@ -247,12 +198,63 @@ export function Ingredients() {
                     </p>
                   )}
                 </div>
+
+                <div>
+                  <label
+                    htmlFor="ingredient-unit"
+                    className="mb-1 block text-sm font-medium text-surface-800/70"
+                  >
+                    Unidade de Medida
+                  </label>
+                  <select
+                    id="ingredient-unit"
+                    className={`w-full rounded-xl border bg-surface-50 dark:bg-surface-200/50 px-3 py-2.5 text-sm text-surface-900 focus:outline-none ${errors.unit_of_measure ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
+                    {...register('unit_of_measure')}
+                  >
+                    {Object.entries(UNIT_LABELS).map(([val, label]) => (
+                      <option key={val} value={val}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.unit_of_measure && (
+                    <p className="mt-1 text-xs text-danger-500">
+                      {errors.unit_of_measure.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="ingredient-price"
+                  className="mb-1 block text-sm font-medium text-surface-800/70"
+                >
+                  Preço (R$)
+                </label>
+
+                <input
+                  id="ingredient-price"
+                  type="number"
+                  placeholder="0,00"
+                  step="0.01"
+                  min="0"
+                  className={`w-full rounded-xl border bg-surface-50 dark:bg-surface-200/50 px-3 py-2.5 text-sm text-surface-900 focus:outline-none ${errors.purchase_price ? 'border-danger-500 focus:border-danger-500' : 'border-surface-200 focus:border-primary-300'}`}
+                  {...register('purchase_price', {
+                    setValueAs: (v: string) => (v === '' ? 0 : parseFloat(v)),
+                  })}
+                />
+                {errors.purchase_price && (
+                  <p className="mt-1 text-xs text-danger-500">
+                    {errors.purchase_price.message}
+                  </p>
+                )}
               </div>
 
               {watchPrice > 0 && watchQty > 0 && (
                 <div className="rounded-lg bg-accent-50 dark:bg-accent-500/10 p-3 text-sm">
                   <span className="text-accent-700 dark:text-accent-400 font-medium">
-                    Custo unitário:{' '}
+                    Preço por Unidade:{' '}
                     {formatCurrency(calculateUnitCost(watchPrice, watchQty))}
                     {UNIT_SUFFIX[watchUnit]}
                   </span>
@@ -321,16 +323,16 @@ export function Ingredients() {
                   Nome
                 </th>
                 <th className="px-4 py-3 text-left font-medium text-surface-800/60">
-                  Unidade
+                  Peso/Volume
+                </th>
+                <th className="px-4 py-3 text-left font-medium text-surface-800/60">
+                  Unidade de Medida
                 </th>
                 <th className="px-4 py-3 text-right font-medium text-surface-800/60">
-                  Preço Compra
+                  Preço (R$)
                 </th>
                 <th className="px-4 py-3 text-right font-medium text-surface-800/60">
-                  Qtd. Comprada
-                </th>
-                <th className="px-4 py-3 text-right font-medium text-surface-800/60">
-                  Custo/Unidade
+                  Preço/Unidade
                 </th>
                 <th className="px-4 py-3 text-right font-medium text-surface-800/60">
                   Ações
@@ -352,15 +354,16 @@ export function Ingredients() {
                     <td className="px-4 py-3 font-medium text-surface-900">
                       {ingredient.name}
                     </td>
+                    <td className="px-4 py-3  text-surface-800/70">
+                      {ingredient.purchase_quantity}
+                    </td>
                     <td className="px-4 py-3 text-surface-800/60">
                       {UNIT_LABELS[ingredient.unit_of_measure as UnitOfMeasure]}
                     </td>
                     <td className="px-4 py-3 text-right text-surface-800/70">
                       {formatCurrency(ingredient.purchase_price)}
                     </td>
-                    <td className="px-4 py-3 text-right text-surface-800/70">
-                      {ingredient.purchase_quantity}
-                    </td>
+
                     <td className="px-4 py-3 text-right font-semibold text-accent-600 dark:text-accent-400">
                       {formatCurrency(unitCost)}
                       {UNIT_SUFFIX[ingredient.unit_of_measure as UnitOfMeasure]}
