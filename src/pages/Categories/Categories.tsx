@@ -67,7 +67,7 @@ export function Categories() {
   }, [fetch]);
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-5xl">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-surface-900">Categorias</h1>

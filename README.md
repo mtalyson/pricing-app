@@ -1,6 +1,6 @@
-# PricingApp 🍳💰
+# Smart Pricing App 🍳💰
 
-O **PricingApp** é uma aplicação web voltada para a gestão de custos e precificação inteligente de produtos gastronômicos. Ideal para empreendedores, confeiteiros e donos de restaurantes que precisam de precisão na hora de calcular fichas técnicas e definir o preço final de venda dos seus produtos.
+O **Smart Pricing App** é uma aplicação web voltada para a gestão de custos e precificação inteligente de produtos gastronômicos. Ideal para empreendedores, confeiteiros e donos de restaurantes que precisam de precisão na hora de calcular fichas técnicas e definir o preço final de venda dos seus produtos.
 
 ## 🚀 Funcionalidades
 
