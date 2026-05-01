@@ -54,6 +54,7 @@ desktop.ini
 *.njsproj
 *.sln
 *.sw?
+.claude
 
 # Misc
 .eslintcache

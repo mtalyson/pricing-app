@@ -1,4 +1,4 @@
-# AI_CONTEXT.md — Pricing App (MVP)
+# AI_CONTEXT.md — Pricing App (v2)
 
 > **Consulte este arquivo antes de criar qualquer novo componente ou tela.**
 
@@ -31,44 +31,75 @@
 
 ---
 
-## 3. Regras de Autenticação
+## 3. Arquitetura Multi-tenant
+
+O sistema é **multi-tenant por restaurante**:
+- Cada registro de dados (ingredientes, categorias, produtos) pertence a um `restaurant_id`.
+- Um usuário pode criar ou ser membro de múltiplos restaurantes sem limite estabelecido.
+- A coluna `user_id` é mantida para rastreabilidade ("quem criou"), mas o **filtro de acesso** é feito via `restaurant_id`.
+
+---
+
+## 4. Regras de Autenticação
 
 - Fluxo **estritamente via E-mail e Senha** (Supabase Auth).
 - **NÃO** implementar login anônimo / guest.
 - **NÃO** implementar confirmação de e-mail (desabilitado).
 - Todas as rotas de negócio devem ser **protegidas**: sem sessão ativa → redirecionar para `/login`.
-- Row Level Security (RLS) habilitado em **todas** as tabelas; cada registro é filtrado por `user_id = auth.uid()`.
+- Após login, se o usuário não tem restaurante → redirecionar para `/onboarding`.
+- Row Level Security (RLS) habilitado em **todas** as tabelas; cada registro é filtrado por `restaurant_id` via `get_user_restaurant_ids()`.
 
 ---
 
-## 4. Modelo de Dados (PostgreSQL)
+## 5. Modelo de Dados (PostgreSQL)
 
-### 4.1 `categories`
+### 5.1 `restaurants`
+| Coluna | Tipo | Restrições |
+|---|---|---|
+| id | uuid | PK, default `gen_random_uuid()` |
+| name | text | NOT NULL |
+| slug | text | NOT NULL, UNIQUE — URL-friendly |
+| created_at | timestamptz | default `now()` |
+
+### 5.2 `restaurant_members`
+| Coluna | Tipo | Restrições |
+|---|---|---|
+| id | uuid | PK, default `gen_random_uuid()` |
+| restaurant_id | uuid | NOT NULL, FK → `restaurants(id)` ON DELETE CASCADE |
+| user_id | uuid | NOT NULL, FK → `auth.users(id)` ON DELETE CASCADE |
+| role | text | NOT NULL, CHECK `role IN ('owner', 'manager', 'staff')` |
+| created_at | timestamptz | default `now()` |
+| | | UNIQUE(`restaurant_id`, `user_id`) |
+
+### 5.3 `categories`
 | Coluna | Tipo | Restrições |
 |---|---|---|
 | id | uuid | PK, default `gen_random_uuid()` |
 | user_id | uuid | NOT NULL, FK → `auth.users(id)` ON DELETE CASCADE |
+| restaurant_id | uuid | NOT NULL, FK → `restaurants(id)` ON DELETE CASCADE |
 | name | text | NOT NULL |
 | created_at | timestamptz | default `now()` |
 
-### 4.2 `ingredients`
+### 5.4 `ingredients`
 | Coluna | Tipo | Restrições |
 |---|---|---|
 | id | uuid | PK, default `gen_random_uuid()` |
 | user_id | uuid | NOT NULL, FK → `auth.users(id)` ON DELETE CASCADE |
+| restaurant_id | uuid | NOT NULL, FK → `restaurants(id)` ON DELETE CASCADE |
 | name | text | NOT NULL |
-| unit_of_measure | text | NOT NULL — `'g'`, `'ml'`, `'un'` |
+| unit_of_measure | text | NOT NULL — `'g'`, `'kg'`, `'ml'`, `'l'`, `'un'` |
 | purchase_price | numeric | NOT NULL |
 | purchase_quantity | numeric | NOT NULL |
 | created_at | timestamptz | default `now()` |
 
 > **Custo por unidade base** = `purchase_price / purchase_quantity`
 
-### 4.3 `products`
+### 5.5 `products`
 | Coluna | Tipo | Restrições |
 |---|---|---|
 | id | uuid | PK, default `gen_random_uuid()` |
 | user_id | uuid | NOT NULL, FK → `auth.users(id)` ON DELETE CASCADE |
+| restaurant_id | uuid | NOT NULL, FK → `restaurants(id)` ON DELETE CASCADE |
 | category_id | uuid | FK → `categories(id)` ON DELETE SET NULL |
 | name | text | NOT NULL |
 | profit_margin_desired | numeric | NOT NULL, default `0` |
@@ -76,7 +107,7 @@
 | fixed_costs_allowance | numeric | NOT NULL, default `0` |
 | created_at | timestamptz | default `now()` |
 
-### 4.4 `product_ingredients` (tabela pivô)
+### 5.6 `product_ingredients` (tabela pivô)
 | Coluna | Tipo | Restrições |
 |---|---|---|
 | id | uuid | PK, default `gen_random_uuid()` |
@@ -86,7 +117,20 @@
 
 ---
 
-## 5. Motor de Cálculo (Fórmulas)
+## 6. RLS — Funções Helpers
+
+```sql
+-- Retorna todos os restaurant_ids do usuário autenticado
+get_user_restaurant_ids() RETURNS SETOF uuid
+
+-- Verifica se o usuário é owner de um restaurante
+is_restaurant_owner(restaurant_id uuid) RETURNS boolean
+
+```
+
+---
+
+## 7. Motor de Cálculo (Fórmulas)
 
 ```
 Custo Unitário do Ingrediente = purchase_price / purchase_quantity
@@ -104,7 +148,7 @@ Lucro Líquido Esperado = preço_sugerido - custo_com_fixos - (preço_sugerido �
 
 ---
 
-## 6. Estrutura de Pastas (convenção)
+## 8. Estrutura de Pastas (convenção)
 
 ```
 src/
@@ -116,10 +160,10 @@ src/
 ├── constants/        # Constantes (units, currencies, etc)
 ├── hooks/            # Custom hooks (useAuth, useIngredients…)
 ├── lib/              # Configurações (supabase client, utils)
-├── pages/            # Telas (Login, Register, Dashboard…)
-├── routes/           # Definição de rotas + ProtectedRoute
-├── stores/           # Zustand stores
-├── types/            # Tipos TypeScript (database, domain)
+├── pages/            # Telas (Login, Register, Dashboard, Onboarding, Restaurants…)
+├── routes/           # Definição de rotas + ProtectedRoute + RestaurantGuard
+├── stores/           # Zustand stores (auth, restaurant, ingredients, categories, products, theme)
+├── types/            # Tipos TypeScript (database, domain, restaurant)
 ├── utils/            # Funções puras (pricing engine, conversions)
 │   └── __tests__/    # Testes unitários das funções puras
 └── main.tsx
@@ -127,7 +171,22 @@ src/
 
 ---
 
-## 7. Convenções de Código
+## 9. Fluxo de Navegação
+
+```
+/login                   → público
+/register                → público
+/onboarding              → autenticado, SEM restaurante
+/                        → autenticado + restaurante selecionado (RestaurantGuard)
+  /ingredients
+  /categories
+  /products
+  /products/:id
+```
+
+---
+
+## 10. Convenções de Código
 
 - Imports organizados: `react` → `módulos externos` → `~/internos` → `relativos`.
 - Sem `console.log` em produção (warning via ESLint).

@@ -5,12 +5,15 @@ import {
   Categories,
   Ingredients,
   Login,
+  Onboarding,
   ProductDetail,
   Products,
   Register,
+  Restaurants,
 } from '~/pages';
 
 import { ProtectedRoute } from './ProtectedRoute';
+import { RestaurantGuard } from './RestaurantGuard';
 
 export const router = createBrowserRouter([
   {
@@ -22,10 +25,21 @@ export const router = createBrowserRouter([
     element: <Register />,
   },
   {
+    path: '/onboarding',
+    element: (
+      <ProtectedRoute>
+        <Onboarding />
+      </ProtectedRoute>
+    ),
+  },
+
+  {
     path: '/',
     element: (
       <ProtectedRoute>
-        <Dashboard />
+        <RestaurantGuard>
+          <Dashboard />
+        </RestaurantGuard>
       </ProtectedRoute>
     ),
     children: [
@@ -48,6 +62,10 @@ export const router = createBrowserRouter([
       {
         path: 'products/:id',
         element: <ProductDetail />,
+      },
+      {
+        path: 'restaurants',
+        element: <Restaurants />,
       },
     ],
   },

@@ -3,6 +3,7 @@ export type UnitOfMeasure = 'g' | 'kg' | 'ml' | 'l' | 'un';
 export interface Category {
   id: string;
   user_id: string;
+  restaurant_id: string;
   name: string;
   created_at: string;
 }
@@ -10,6 +11,7 @@ export interface Category {
 export interface Ingredient {
   id: string;
   user_id: string;
+  restaurant_id: string;
   name: string;
   unit_of_measure: UnitOfMeasure;
   purchase_price: number;
@@ -20,6 +22,7 @@ export interface Ingredient {
 export interface Product {
   id: string;
   user_id: string;
+  restaurant_id: string;
   category_id: string | null;
   name: string;
   profit_margin_desired: number;
@@ -65,7 +68,7 @@ export interface IngredientFormData {
 
 export interface ProductFormData {
   name: string;
-  category_id?: string;
+  category_id?: string | null;
   profit_margin_desired: number;
   delivery_fee_percentage: number;
   fixed_costs_allowance: number;

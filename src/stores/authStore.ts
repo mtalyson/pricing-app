@@ -3,6 +3,8 @@ import { create } from 'zustand';
 import { supabase } from '~/lib/supabase';
 import type { AuthState } from '~/types';
 
+import { useRestaurantStore } from './restaurantStore';
+
 let initPromise: Promise<void> | null = null;
 
 export const useAuthStore = create<AuthState>(set => ({
@@ -85,6 +87,7 @@ export const useAuthStore = create<AuthState>(set => ({
       if (error) throw error;
 
       set({ user: null, loading: false });
+      useRestaurantStore.getState().reset();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao sair';
 

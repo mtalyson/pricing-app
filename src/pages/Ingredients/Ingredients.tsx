@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Trash2, Pencil, ShoppingBasket, X, Search } from 'lucide-react';
 
+import { Button } from '~/components';
 import { UNIT_LABELS, UNIT_SUFFIX } from '~/constants';
 import { useIngredientsStore } from '~/stores/ingredientsStore';
 import type { Ingredient, UnitOfMeasure } from '~/types';
@@ -93,6 +94,8 @@ export function Ingredients() {
             Cadastre e gerencie os ingredientes do seu estoque.
           </p>
         </div>
+
+        <Button>Novo Ingrediente</Button>
 
         <button
           id="ingredient-add-btn"

@@ -3,6 +3,8 @@ import { create } from 'zustand';
 import { supabase } from '~/lib/supabase';
 import type { CategoriesState, CategoryFormData } from '~/types';
 
+import { useRestaurantStore } from './restaurantStore';
+
 export const useCategoriesStore = create<CategoriesState>((set, get) => ({
   categories: [],
   loading: false,
@@ -34,9 +36,15 @@ export const useCategoriesStore = create<CategoriesState>((set, get) => ({
       return;
     }
 
+    const restaurant = useRestaurantStore.getState().currentRestaurant;
+    if (!restaurant) {
+      set({ error: 'Nenhum restaurante selecionado' });
+      return;
+    }
+
     const { data, error } = await supabase
       .from('categories')
-      .insert({ ...formData, user_id: user.id })
+      .insert({ ...formData, user_id: user.id, restaurant_id: restaurant.id })
       .select()
       .single();
 

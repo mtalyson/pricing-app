@@ -7,6 +7,8 @@ import type {
   ProductsState,
 } from '~/types';
 
+import { useRestaurantStore } from './restaurantStore';
+
 export const useProductsStore = create<ProductsState>((set, get) => ({
   products: [],
   loading: false,
@@ -40,9 +42,15 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
       return null;
     }
 
+    const restaurant = useRestaurantStore.getState().currentRestaurant;
+    if (!restaurant) {
+      set({ error: 'Nenhum restaurante selecionado' });
+      return null;
+    }
+
     const { data, error } = await supabase
       .from('products')
-      .insert({ ...formData, user_id: user.id })
+      .insert({ ...formData, user_id: user.id, restaurant_id: restaurant.id })
       .select()
       .single();
 
